@@ -1,6 +1,6 @@
 {
-  "name": "grapheene",
-  "version": "0.0.1",
+  "name": "@grapheene/grapheene",
+  "version": "0.0.4",
   "description": "A Grapheene SDK for NodeJS",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -37,8 +37,10 @@
   },
   "files": [
     "dist",
+    "zokrates",
     "index.js",
-    "index.d.ts"
+    "index.d.ts",
+    "config.json"
   ],
   "main": "./dist",
   "types": "./index.d.ts"
