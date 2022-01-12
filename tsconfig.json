@@ -1,17 +1,24 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "target": "es2015",
-    "resolveJsonModule": true,
-    "noImplicitAny": true,
-    "moduleResolution": "node",
-    "sourceMap": true,
-    "outDir": "dist",
-    "baseUrl": "./template",
-    "paths": {
-      "*": ["node_modules/*", "src/types/*"]
-    },
-    "typeRoots": ["./types", "node_modules/@types"]
+      "rootDir": "src",
+      "outDir": "./dist",
+      "target": "es2019",
+      "module": "commonjs",
+      "moduleResolution": "node",
+      "downlevelIteration": true,
+      "inlineSources": true,
+      "inlineSourceMap": true,
+      "alwaysStrict": true,
+      "declaration": true,
+      "removeComments": false,
+      "strict": true,
+      "noImplicitReturns": true,
+      "noUnusedLocals": true,
+      "noUnusedParameters": false,
+      "noImplicitAny": false,
+      "noImplicitThis": false,
+      "experimentalDecorators": true,
+      "lib": ["es2017"]
   },
   "watchOptions": {
     // Use native file system events for files and directories
@@ -26,6 +33,5 @@
     // files to track  work from these directories
     "excludeDirectories": ["**/node_modules", "dist", "users"]
   },
-  "include": [
-    "src/**/*", "types/**/*"]
+  "include": ["src/**/*.ts"]
 }
