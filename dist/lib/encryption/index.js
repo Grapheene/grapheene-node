@@ -12,12 +12,17 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.decrypt = exports.encrypt = exports.configureKeys = void 0;
 const GCrypto = require("./Crypto");
 const configureKeys = (keys) => __awaiter(void 0, void 0, void 0, function* () {
-    let hmac = yield GCrypto.importJwk(GCrypto.pemToJwk(keys.hmac));
-    let privateKey = yield GCrypto.importJwk(GCrypto.pemToJwk(keys.privateKey));
-    let publicKey = yield GCrypto.importJwk(GCrypto.getPublicJwk(GCrypto.pemToJwk(keys.privateKey)));
-    let secretKey = yield GCrypto.sharedKey(privateKey, publicKey);
+    let hmac, privateKey, publicKey;
+    if (keys.hasOwnProperty('hmac')) {
+        hmac = yield GCrypto.importJwk(GCrypto.pemToJwk(keys.hmac));
+    }
+    if (keys.hasOwnProperty('privateKey')) {
+        privateKey = yield GCrypto.importJwk(GCrypto.pemToJwk(keys.privateKey));
+    }
+    if (keys.hasOwnProperty('publicKey')) {
+        publicKey = yield GCrypto.importJwk(GCrypto.getPublicJwk(GCrypto.pemToJwk(keys.privateKey)));
+    }
     return {
-        secretKey: secretKey,
         privateKey: privateKey,
         publicKey: publicKey,
         hmac: hmac
@@ -30,7 +35,7 @@ const encrypt = (data, keys) => {
             .then((secrets) => __awaiter(void 0, void 0, void 0, function* () {
             let ecdh = new GCrypto.ECDHKeyPair();
             yield ecdh.importPrivateKey(secrets.privateKey);
-            yield ecdh.importPublicKey(yield GCrypto.importJwk(GCrypto.pemToJwk(keys.publicKey)));
+            yield ecdh.importPublicKey(yield GCrypto.importJwk(GCrypto.pemToJwk(secrets.publicKey)));
             let aesKey = yield ecdh.deriveKey(ecdh.publicKey);
             resolve(yield GCrypto.encrypt(data, aesKey));
         }))
@@ -44,7 +49,7 @@ const decrypt = (encrypted, keys) => {
             .then((secrets) => __awaiter(void 0, void 0, void 0, function* () {
             let ecdh = new GCrypto.ECDHKeyPair();
             yield ecdh.importPrivateKey(secrets.privateKey);
-            yield ecdh.importPublicKey(yield GCrypto.importJwk(GCrypto.pemToJwk(keys.publicKey)));
+            yield ecdh.importPublicKey(yield GCrypto.importJwk(GCrypto.pemToJwk(secrets.publicKey)));
             let aesKey = yield ecdh.deriveKey(ecdh.publicKey);
             GCrypto.decrypt(encrypted, aesKey)
                 .then((decrypted) => {

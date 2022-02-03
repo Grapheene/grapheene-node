@@ -3,7 +3,7 @@ import {Proof} from "../../../index";
 const exec = require("child_process").execSync;
 const path = require('path');
 const fs = require("fs-extra");
-let dir = path.dirname(require.main.filename || process.mainModule.filename);
+let dir = path.dirname(__dirname);
 
 
 export class Zokrates {
@@ -28,8 +28,9 @@ export class Zokrates {
 
     private setPaths(_storePath: string) {
         const os = require('os');
-
         const match = dir.match(/dist/);
+        fs.ensureDirSync(_storePath);
+
         if (!match) {
             this._libRoot = dir + '/zokrates'
         } else {
@@ -49,6 +50,8 @@ export class Zokrates {
         } else {
             this._execPath = this._execPath + '/zokrates '
         }
+        fs.ensureDirSync(this._execPath);
+        fs.ensureDirSync(this._libRoot);
         this._storePath = _storePath;
     }
 

@@ -1,5 +1,8 @@
 import {AxiosInstance} from "axios";
 import * as crypto from "crypto";
+import KeyRingData from "./src/lib/kmf/KeyRingData";
+import Member from "./src/lib/kmf/Member";
+import Key from "./src/lib/kmf/Key";
 
 export interface KmsOptions {
     client_id: string;
@@ -30,14 +33,58 @@ interface CryptoKeys {
     hmac: crypto.KeyObject;
 }
 
-interface RawKeys {
-    secretKey: crypto.KeyObject;
-    privateKey: crypto.KeyObject;
-    publicKey: crypto.KeyObject;
-    hmac: crypto.KeyObject;
-}
-
-interface AuthHeaders{
+interface AuthHeaders {
     Token: string;
     Key: string;
+}
+
+interface KeyRingOptions {
+    uuid: string;
+    uniqueName: string;
+    name: string;
+    data: Array<KeyRingData>
+    members: Array<Member>
+    createdAt: string;
+    updatedAt: string;
+}
+
+declare enum StorageServices {
+    S3 = 's3',
+    LOCAL = 'local',
+    UNSAVED = 'unsaved'
+}
+
+interface KeyRingDataOptions {
+    uuid: string;
+    uniqueName: string;
+    uniquePath: string;
+    name: string;
+    path: string;
+    service: StorageServices;
+}
+
+interface MemberOptions {
+    uuid?: string;
+    name: string;
+    keys?: Array<Key>;
+}
+
+interface KeyOptions {
+    uuid: string;
+    active: boolean;
+    createdAt: string;
+    updatedAt: string;
+    data?: KeyData;
+}
+
+interface KeyData {
+    privateKey?: string;
+    hmac?: string;
+    publicKey?: string;
+}
+
+declare enum KeyDataEnum {
+    privateKey = 'privateKey',
+    hmac = 'hmac',
+    publicKey = 'publicKey'
 }

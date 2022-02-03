@@ -5,6 +5,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rm -rf ./dist/* && npm run build-ts",
+    "build:browser": "rm -rf ./dist/* && npm run build-ts",
     "build-ts": "tsc",
     "watch-ts": "tsc -w"
   },
@@ -24,12 +25,17 @@
   },
   "homepage": "https://github.com/Grapheene/grapheene-node#readme",
   "dependencies": {
+    "atob": "^2.1.2",
     "axios": "^0.24.0",
+    "btoa": "^1.2.1",
     "fs-extra": "^10.0.0",
-    "jsonwebtoken": "^8.5.1"
+    "jsonwebtoken": "^8.5.1",
+    "sqlite3": "^5.0.2",
+    "tsify": "^5.0.4"
   },
   "devDependencies": {
     "@types/node": "^17.0.2",
+    "@types/sqlite3": "^3.1.8",
     "eslint": "^7.7.0",
     "jest": "^27.2.1",
     "ts-jest": "^27.0.5",

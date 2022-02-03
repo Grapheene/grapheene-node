@@ -4,7 +4,7 @@ exports.Zokrates = void 0;
 const exec = require("child_process").execSync;
 const path = require('path');
 const fs = require("fs-extra");
-let dir = path.dirname(require.main.filename || process.mainModule.filename);
+let dir = path.dirname(__dirname);
 class Zokrates {
     constructor(clientId, apiKey, options) {
         if (!options.path) {
@@ -19,6 +19,7 @@ class Zokrates {
     setPaths(_storePath) {
         const os = require('os');
         const match = dir.match(/dist/);
+        fs.ensureDirSync(_storePath);
         if (!match) {
             this._libRoot = dir + '/zokrates';
         }
@@ -40,6 +41,8 @@ class Zokrates {
         else {
             this._execPath = this._execPath + '/zokrates ';
         }
+        fs.ensureDirSync(this._execPath);
+        fs.ensureDirSync(this._libRoot);
         this._storePath = _storePath;
     }
     run(command) {

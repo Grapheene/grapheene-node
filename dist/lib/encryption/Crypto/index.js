@@ -9,17 +9,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.sharedKey = exports.getPublicJwk = exports.pemToJwk = exports.jwkToPem = exports.importJwk = exports.exportJwk = exports.hmacSign = exports.generateEncryptedKey = exports.encryptFile = exports.decryptFile = exports.encryptHex = exports.encrypt = exports.decrypt = exports.generateRandomString = exports.hexToBytes = exports.bytesToHex = exports.ab2str = exports.str2ab = exports.HMAC = exports.ECDHKeyPair = exports.AESKey = exports.KeyStore = exports.KeyManagement = void 0;
+exports.getPublicJwk = exports.pemToJwk = exports.jwkToPem = exports.importJwk = exports.exportJwk = exports.hmacSign = exports.generateEncryptedKey = exports.encryptFile = exports.decryptFile = exports.encryptHex = exports.encrypt = exports.decrypt = exports.generateRandomString = exports.hexToBytes = exports.bytesToHex = exports.ab2str = exports.str2ab = exports.HMAC = exports.ECDHKeyPair = exports.AESKey = void 0;
 const crypto = require("crypto");
-const webcrypto = require('crypto').webcrypto;
-const { subtle } = require('crypto').webcrypto;
-var KeyManagement_1 = require("./KeyManagement");
-Object.defineProperty(exports, "KeyManagement", { enumerable: true, get: function () { return KeyManagement_1.default; } });
-var KeyStore_1 = require("./KeyStore");
-Object.defineProperty(exports, "KeyStore", { enumerable: true, get: function () { return KeyStore_1.default; } });
+const atob = require('atob');
+const btoa = require('btoa');
+let webcrypto, CryptoKeyInstance;
+if (typeof window === "undefined") {
+    webcrypto = require('crypto').webcrypto;
+    CryptoKeyInstance = crypto.webcrypto.CryptoKey;
+}
+else {
+    webcrypto = window.crypto;
+    CryptoKeyInstance = CryptoKey;
+}
 class AESKey {
     constructor(options) {
-        if (options.key instanceof crypto.webcrypto.CryptoKey) {
+        if (options.key instanceof CryptoKeyInstance) {
             this._key = options.key;
         }
         else {
@@ -46,7 +51,7 @@ class AESKey {
                 password = this._password;
             }
             let rawPassword = str2ab(password);
-            return subtle.importKey("raw", rawPassword, {
+            return webcrypto.subtle.importKey("raw", rawPassword, {
                 name: 'PBKDF2'
             }, false, ['deriveKey']);
         });
@@ -58,7 +63,7 @@ class AESKey {
             if (!secretKey) {
                 secretKey = yield this.importSecretKey();
             }
-            return subtle.deriveKey({
+            return webcrypto.subtle.deriveKey({
                 name: 'PBKDF2',
                 salt: salt,
                 iterations: 80000,
@@ -78,7 +83,7 @@ class AESKey {
             if (!secretKey) {
                 secretKey = yield this.importSecretKey();
             }
-            return subtle.deriveKey({
+            return webcrypto.subtle.deriveKey({
                 name: 'PBKDF2',
                 salt: salt,
                 iterations: 80000,
@@ -105,7 +110,7 @@ class AESKey {
             }
             const iv = webcrypto.getRandomValues(new Uint8Array(16));
             const content = new Uint8Array(bytes);
-            return subtle.encrypt({
+            return webcrypto.subtle.encrypt({
                 iv,
                 name: 'AES-GCM'
             }, derivedKey, content)
@@ -134,13 +139,12 @@ class AESKey {
             const iv = new Uint8Array(bytes.slice(0, 16));
             const content = new Uint8Array(bytes.slice(32));
             const derivedKey = yield this.deriveDecryptionSecretKey(salt);
-            return subtle.decrypt({
+            return webcrypto.subtle.decrypt({
                 iv,
                 name: 'AES-GCM'
             }, derivedKey, content)
                 .then((decrypted) => {
-                let dec = new Uint8Array(decrypted);
-                return dec;
+                return new Uint8Array(decrypted);
                 /*return {
                   bytes: dec,
                   utf8: ()=>ab2str(dec),
@@ -164,14 +168,14 @@ class AESKey {
                     const derivedKey = yield this.deriveEncryptionSecretKey(salt);
                     const iv = webcrypto.getRandomValues(new Uint8Array(16));
                     const content = new Uint8Array(fr.result);
-                    subtle.encrypt({
+                    webcrypto.subtle.encrypt({
                         iv,
                         name: 'AES-GCM'
                     }, derivedKey, content)
                         .then((encrypted) => {
-                        let encryptedContent = new Uint8Array(encrypted);
-                        var blob = new Blob([iv, salt, encryptedContent], { type: 'application/octet-stream' });
-                        let encFile = new File([blob], 'encryptedFile', {
+                        const encryptedContent = new Uint8Array(encrypted);
+                        const blob = new Blob([iv, salt, encryptedContent], { type: 'application/octet-stream' });
+                        const encFile = new File([blob], 'encryptedFile', {
                             lastModified: file.lastModified,
                             type: file.type
                         });
@@ -198,7 +202,7 @@ class AESKey {
                     const derivedKey = yield this.deriveDecryptionSecretKey(salt);
                     const iv = new Uint8Array(fr.result.slice(0, 16));
                     const content = new Uint8Array(fr.result.slice(32));
-                    subtle.decrypt({
+                    webcrypto.subtle.decrypt({
                         iv,
                         name: 'AES-GCM'
                     }, derivedKey, content)
@@ -237,7 +241,7 @@ class ExportedKey {
     bytes() {
         return __awaiter(this, void 0, void 0, function* () {
             //console.log('EXP:BYTES1', this.type, this.key)
-            let exported = yield subtle.exportKey(this.type, this.key);
+            let exported = yield webcrypto.subtle.exportKey(this.type, this.key);
             //console.log('EXP:BYTES2')
             this._bytes = new Uint8Array(exported);
             //console.log('EXP:BYTES3')
@@ -273,7 +277,7 @@ class ECDHKeyPair {
     static generate() {
         return __awaiter(this, void 0, void 0, function* () {
             let key = new ECDHKeyPair();
-            key._pair = yield subtle.generateKey({
+            key._pair = yield webcrypto.subtle.generateKey({
                 name: "ECDH",
                 namedCurve: 'P-384'
             }, true, ["deriveKey", "deriveBits"]);
@@ -288,7 +292,7 @@ class ECDHKeyPair {
     }
     deriveKey(publicKey) {
         return __awaiter(this, void 0, void 0, function* () {
-            return subtle.deriveKey({
+            return webcrypto.subtle.deriveKey({
                 name: 'ECDH',
                 public: publicKey
             }, this.privateKey, {
@@ -324,12 +328,12 @@ class ECDHKeyPair {
     }
     importPrivateKey(raw) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (raw instanceof crypto.webcrypto.CryptoKey) {
+            if (raw instanceof CryptoKeyInstance) {
                 this._pair.privateKey = raw;
                 return raw;
             }
             raw = str2ab(raw);
-            let key = yield subtle.importKey('pkcs8', raw, {
+            let key = yield webcrypto.subtle.importKey('pkcs8', raw, {
                 name: "ECDH",
                 namedCurve: 'P-384'
             }, true, ['deriveKey', 'deriveBits']);
@@ -342,14 +346,14 @@ class ECDHKeyPair {
     importPublicKey(raw) {
         return __awaiter(this, void 0, void 0, function* () {
             //console.log('IMPORT PUBLIC KEY')
-            if (raw instanceof crypto.webcrypto.CryptoKey) {
+            if (raw instanceof CryptoKeyInstance) {
                 //console.log('IMPORT PUBLIC KEY AS CRYPTO KEY')
                 this._pair.publicKey = raw;
                 return raw;
             }
             //console.log('IMPORT PUBLIC KEY AS RAW')
             raw = str2ab(raw);
-            let key = yield subtle.importKey('raw', raw, {
+            let key = yield webcrypto.subtle.importKey('raw', raw, {
                 name: "ECDH",
                 namedCurve: 'P-384'
             }, true, []);
@@ -364,7 +368,7 @@ exports.ECDHKeyPair = ECDHKeyPair;
 class HMAC {
     constructor(raw, useSalt) {
         this.useSalt = useSalt;
-        if (raw instanceof crypto.webcrypto.CryptoKey) {
+        if (raw instanceof CryptoKeyInstance) {
             this._key = raw;
         }
         else if (raw) {
@@ -376,7 +380,7 @@ class HMAC {
             if (this._key) {
                 return this._key;
             }
-            let key = yield subtle.importKey('raw', this._raw, {
+            let key = yield webcrypto.subtle.importKey('raw', this._raw, {
                 name: 'HMAC',
                 hash: 'SHA-256',
             }, true, ['sign', 'verify']);
@@ -391,7 +395,7 @@ class HMAC {
             if (this._raw) {
                 return this.importKey();
             }
-            this._key = yield subtle.generateKey({
+            this._key = yield webcrypto.subtle.generateKey({
                 name: 'HMAC',
                 hash: 'SHA-256'
             }, true, ['sign', 'verify']);
@@ -421,8 +425,7 @@ class HMAC {
             else {
                 encoded = str2ab(message);
             }
-            let result = yield subtle.verify("HMAC", yield this.key(), signature, encoded);
-            return result;
+            return yield webcrypto.subtle.verify("HMAC", yield this.key(), signature, encoded);
         });
     }
     sign(message) {
@@ -435,7 +438,7 @@ class HMAC {
             else {
                 encoded = str2ab(message);
             }
-            let signature = yield subtle.sign("HMAC", yield this.key(), encoded);
+            let signature = yield webcrypto.subtle.sign("HMAC", yield this.key(), encoded);
             return bytesToHex(salt) + bytesToHex(signature);
         });
     }
@@ -487,7 +490,7 @@ exports.generateRandomString = generateRandomString;
 function decrypt(data, password) {
     return __awaiter(this, void 0, void 0, function* () {
         let props = { password };
-        if (password instanceof crypto.webcrypto.CryptoKey) {
+        if (password instanceof CryptoKeyInstance) {
             props.key = password;
         }
         let decryptionKey = new AESKey(props);
@@ -502,7 +505,7 @@ exports.decrypt = decrypt;
 function encrypt(data, password) {
     return __awaiter(this, void 0, void 0, function* () {
         let props = { password };
-        if (password instanceof crypto.webcrypto.CryptoKey) {
+        if (password instanceof CryptoKeyInstance) {
             props = { key: password };
         }
         let encryptionKey = new AESKey(props);
@@ -565,8 +568,7 @@ function hmacSign(msg, key) {
 exports.hmacSign = hmacSign;
 function exportJwk(key) {
     return __awaiter(this, void 0, void 0, function* () {
-        let exported = yield subtle.exportKey('jwk', key);
-        return exported;
+        return yield webcrypto.subtle.exportKey('jwk', key);
     });
 }
 exports.exportJwk = exportJwk;
@@ -594,9 +596,8 @@ function importJwk(jwk) {
         if (!algo) {
             return null;
         }
-        let imported = yield subtle.importKey('jwk', jwk, algo, true, jwk.key_ops);
-        //console.log('imported', imported, imported instanceof crypto.webcrypto.CryptoKey)
-        return imported;
+        //console.log('imported', imported, imported instanceof CryptoKeyInstance)
+        return yield webcrypto.subtle.importKey('jwk', jwk, algo, true, jwk.key_ops);
     });
 }
 exports.importJwk = importJwk;
@@ -629,16 +630,4 @@ function getPublicJwk(jwk) {
     return jwk;
 }
 exports.getPublicJwk = getPublicJwk;
-function sharedKey(privateKey, publicKey) {
-    return __awaiter(this, void 0, void 0, function* () {
-        return subtle.deriveKey({
-            name: 'ECDH',
-            public: publicKey
-        }, privateKey, {
-            name: 'AES-GCM',
-            length: 256
-        }, true, ['encrypt', 'decrypt']);
-    });
-}
-exports.sharedKey = sharedKey;
 //# sourceMappingURL=index.js.map

@@ -1,8 +1,7 @@
 const path = require('path');
 let dir = path.dirname(require.main.filename || process.mainModule.filename);
 
-const Grapheene = require('./dist')('US34552ba2262d4dc0ac2268f82f4ede23', 'SK4d1286e70fe3408fa8c10430b293d946');
-
+/*
 Grapheene.kms.generate()
     .then((keys) => {
         console.log('Keys: ', keys);
@@ -11,13 +10,94 @@ Grapheene.kms.generate()
         Grapheene.save(myDir + '/keys.json', JSON.stringify(keys));
         Grapheene.crypto.encrypt(myDir, keys)
             .then(async (encrypted) => {
-                console.log('Encrypted Path: ','\n', encrypted);
+                console.log('Encrypted Path: ', '\n', encrypted);
                 Grapheene.save(myDir + '/encrypted', encrypted);
                 const decrypted = await Grapheene.crypto.decrypt(encrypted, keys);
-                console.log('\n','Decrypted Path: ', decrypted);
+                console.log('\n', 'Decrypted Path: ', decrypted);
             });
     })
-    .catch(console.log);
+
+Creates a new key ring,
+Creates a ring "master key",
+Mints public key for owner(member that created it),
+
+
+MasterKey <- // This mints all public keys for members and encrypts the data
+Members   <- // Members have their own public keys
+
+if we rotate....
+
+We create a new master key,
+We mint public keys for all members,
+Re-encrypt data with new master key
+
+How do we decrypt during a rotation
+
+Join a keyring,
+We attempt to decrypt with one key,
+If that fails we try the other key
+
+Decrypt Data
+
+Join a keyring
+We attempt to decrypt with key
+
+Encrypt Data
+
+Join a keyring
+We attempt to decrypt with key
+
+const Grapheene = new Grapheene({ClientID, OktaAPIKey, SDKKey})
+
+
+ */
+
+const Grapheene = require('./dist')('US34552ba2262d4dc0ac2268f82f4ede23', 'SK4d1286e70fe3408fa8c10430b293d946');
+Grapheene.kmf.ring.create('keyRingName')
+    .then(async (ring) => {
+        const member = await ring.addMember({
+            name: 'sarmad@grapheene.net'
+        });
+
+        // This looks up the master key in SQlite and returns then encrypts the data
+        const encrypted = member.encrypt('somedata');
+        console.log('Encrypted: ',encrypted)
+        // This looks up the members public key in SQlite and returns then decrypts the data
+        const decrypted = member.decrypt(encrypted);
+        console.log('Decrypted: ',decrypted)
+    });
+/*
+Grapheene.ring.get('channelName | channelId')
+   .then((ring) => {
+
+       const member = ring.getMember({
+           uniqueName: 'sarmad@grapheene.net',
+       });
+       const somedata = Grapheene.storage.load('uniqueFileName')
+       const decrypted = member.decrypt(somedata);
+   });
+
+Grapheene.ring.get('channelName | channelId')
+   .then((ring) => {
+
+       const member = ring.getMember({
+           uniqueName: 'someName'
+       });
+
+       const data = member.encrypt('somedata');
+       /*
+       data = {
+           keyring,
+           data,
+           ...metaData
+       }
+
+       // fs.writeFileSync - wraps up saving makes it easy for the customer
+       Grapheene.storage.save('uniqueName', 'path', data)
+   });
+
+
+*/
 /*
 // File is the path to the data we want to encrypt
 Graph.encrypt().save();

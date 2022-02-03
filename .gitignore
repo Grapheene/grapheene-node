@@ -102,3 +102,5 @@ typings/
 .tern-port
 /files/
 /just_playing/
+/test.js
+/db/

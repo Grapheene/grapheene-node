@@ -1,10 +1,11 @@
 import AuthorizedRest from "./rest/AuthorizedRest";
 import {Zokrates} from "./zk/Zokrates";
-import {KMS} from "./kms/KMS";
-import * as Crypto from './encryption'
+import {KMF} from "./kmf/KMF";
 import TypedArray = NodeJS.TypedArray;
+import {Database} from "sqlite3";
 
 const config = require('../../config.json')
+const sqlite = require('sqlite3').verbose();
 
 const fs = require('fs-extra');
 const path = require('path');
@@ -18,23 +19,20 @@ export class Grapheene {
     private readonly filesDir: string;
     private readonly zkDir: string;
     private readonly cryptoDir: string;
+    private readonly dbDir: string;
     private readonly _restClient: AuthorizedRest;
+    private readonly _db: Database;
 
     private _options: string;
-    private _kms: KMS;
+    private _kmf: KMF;
     private _zk: Zokrates;
-    private _crypto: any;
     private _storage: any;
-    private _data: any;
-    private _keys: any;
-
 
     constructor(clientId: string, apiKey: string, opts?: any) {
         this._options = Object.assign({}, defaults, opts);
         this.apiKey = apiKey;
         this.clientId = clientId;
 
-        this.crypto = Crypto;
 
         this.filesDir = path.dirname(require.main.filename || process.mainModule.filename) + '/files'
 
@@ -48,11 +46,17 @@ export class Grapheene {
 
         this.zkDir = this.filesDir + '/zk';
         this.cryptoDir = this.filesDir + '/encrypt';
+        this.dbDir = this.filesDir + '/db';
 
         this.ensureDirExist()
         this.setupZK()
-        this.setupTokenManager()
         this._restClient = new AuthorizedRest(config.baseUrl, this.clientId, this.zk);
+        this._db = new sqlite.Database(this.dbDir + '/some.db', (err: Error) => {
+            if (err) {
+                throw new Error(err.message)
+            }
+            this.setupDb();
+        });
         this.setupKMS()
 
     }
@@ -61,6 +65,7 @@ export class Grapheene {
         fs.ensureDirSync(this.filesDir)
         fs.ensureDirSync(this.zkDir)
         fs.ensureDirSync(this.cryptoDir)
+        fs.ensureDirSync(this.dbDir)
     }
 
     private setupZK() {
@@ -68,12 +73,30 @@ export class Grapheene {
 
     }
 
-    private setupTokenManager() {
-
+    private setupDb() {
+        let tables: Array<string> = []
+        this._db.all('SELECT \n' +
+            '    *\n' +
+            'FROM \n' +
+            '    sqlite_master\n' +
+            'WHERE \n' +
+            '    type =\'table\' AND \n' +
+            '    name NOT LIKE \'sqlite_%\'', (err: Error, rows: Array<{ name: string }>) => {
+            if (err) {
+                throw  new Error(err.message)
+            }
+            for (let x in rows) {
+                tables.push(rows[x].name)
+            }
+            if (!tables.includes('keystore')) {
+                // this._db.run('CREATE TABLE keystore (ringUUID TEXT, keyUUID TEXT, keyType TEXT,active INT,  data TEXT)');
+                this._db.run('CREATE TABLE keystore (uuid TEXT, active INT,  data TEXT)');
+            }
+        });
     }
 
     private setupKMS() {
-        this.kms = new KMS(this._restClient);
+        this.kmf = new KMF(this._restClient, this._db);
     }
 
     private set zk(zk: Zokrates) {
@@ -96,23 +119,15 @@ export class Grapheene {
         return this._zk;
     }
 
-    set kms(kms: KMS) {
-        this._kms = kms;
+    set kmf(kmf: KMF) {
+        this._kmf = kmf;
     }
 
-    get kms() {
-        return this._kms;
+    get kmf() {
+        return this._kmf;
     }
 
-    private set crypto(crypto: any) {
-        this._crypto = crypto;
-    }
-
-    get crypto() {
-        return this._crypto;
-    }
-
-    private set storage(storage: KMS) {
+    private set storage(storage: KMF) {
         this._storage = storage;
     }
 

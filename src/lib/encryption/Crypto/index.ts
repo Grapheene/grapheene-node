@@ -1,16 +1,23 @@
 import * as crypto from "crypto";
-const webcrypto = require('crypto').webcrypto;
-const {subtle} = require('crypto').webcrypto;
-export {default as KeyManagement} from './KeyManagement'
-export {default as KeyStore} from './KeyStore'
+const atob = require('atob');
+const btoa = require('btoa');
 
+let webcrypto: any, CryptoKeyInstance: any;
+
+if (typeof window === "undefined") {
+    webcrypto = require('crypto').webcrypto;
+    CryptoKeyInstance = crypto.webcrypto.CryptoKey;
+} else {
+    webcrypto = window.crypto;
+    CryptoKeyInstance = CryptoKey;
+}
 
 export class AESKey {
     _password
     _key
 
     constructor(options?: any) {
-        if (options.key instanceof crypto.webcrypto.CryptoKey) {
+        if (options.key instanceof CryptoKeyInstance) {
             this._key = options.key
         } else {
             this._password = options.password
@@ -34,7 +41,7 @@ export class AESKey {
             password = this._password
         }
         let rawPassword = str2ab(password)
-        return subtle.importKey(
+        return webcrypto.subtle.importKey(
             "raw",
             rawPassword,
             {
@@ -50,7 +57,7 @@ export class AESKey {
         if (!secretKey) {
             secretKey = await this.importSecretKey()
         }
-        return subtle.deriveKey({
+        return webcrypto.subtle.deriveKey({
                 name: 'PBKDF2',
                 salt: salt,
                 iterations: 80000,
@@ -58,7 +65,7 @@ export class AESKey {
                     name: 'SHA-256'
                 },
             },
-            secretKey,
+            <CryptoKey>secretKey,
             {
                 name: 'AES-GCM',
                 length: 256,
@@ -74,7 +81,7 @@ export class AESKey {
         if (!secretKey) {
             secretKey = await this.importSecretKey()
         }
-        return subtle.deriveKey({
+        return webcrypto.subtle.deriveKey({
                 name: 'PBKDF2',
                 salt: salt,
                 iterations: 80000,
@@ -82,7 +89,7 @@ export class AESKey {
                     name: 'SHA-256'
                 },
             },
-            secretKey,
+            <CryptoKey>secretKey,
             {
                 name: 'AES-GCM',
                 length: 256,
@@ -105,7 +112,7 @@ export class AESKey {
         }
         const iv = webcrypto.getRandomValues(new Uint8Array(16))
         const content = new Uint8Array(bytes)
-        return subtle.encrypt({
+        return webcrypto.subtle.encrypt({
             iv,
             name: 'AES-GCM'
         }, derivedKey, content)
@@ -135,13 +142,12 @@ export class AESKey {
         const content = new Uint8Array(bytes.slice(32))
         const derivedKey = await this.deriveDecryptionSecretKey(salt)
 
-        return subtle.decrypt({
+        return webcrypto.subtle.decrypt({
             iv,
             name: 'AES-GCM'
         }, derivedKey, content)
             .then((decrypted: any) => {
-                let dec = new Uint8Array(decrypted)
-                return dec
+                return new Uint8Array(decrypted)
                 /*return {
                   bytes: dec,
                   utf8: ()=>ab2str(dec),
@@ -164,14 +170,14 @@ export class AESKey {
                 const derivedKey = await this.deriveEncryptionSecretKey(salt)
                 const iv = webcrypto.getRandomValues(new Uint8Array(16))
                 const content = new Uint8Array(fr.result)
-                subtle.encrypt({
+                webcrypto.subtle.encrypt({
                     iv,
                     name: 'AES-GCM'
                 }, derivedKey, content)
                     .then((encrypted: any) => {
-                        let encryptedContent = new Uint8Array(encrypted)
-                        var blob = new Blob([iv, salt, encryptedContent], {type: 'application/octet-stream'})
-                        let encFile = new File([blob], 'encryptedFile', {
+                        const encryptedContent = new Uint8Array(encrypted)
+                        const blob = new Blob([iv, salt, encryptedContent], {type: 'application/octet-stream'})
+                        const encFile = new File([blob], 'encryptedFile', {
                             lastModified: file.lastModified,
                             type: file.type
                         })
@@ -197,7 +203,7 @@ export class AESKey {
                 const derivedKey = await this.deriveDecryptionSecretKey(salt)
                 const iv = new Uint8Array(fr.result.slice(0, 16))
                 const content = new Uint8Array(fr.result.slice(32))
-                subtle.decrypt({
+                webcrypto.subtle.decrypt({
                     iv,
                     name: 'AES-GCM'
                 }, derivedKey, content)
@@ -238,7 +244,7 @@ class ExportedKey {
 
     async bytes() {
         //console.log('EXP:BYTES1', this.type, this.key)
-        let exported: any = await subtle.exportKey(
+        let exported: any = await webcrypto.subtle.exportKey(
             this.type,
             this.key
         )
@@ -282,7 +288,7 @@ export class ECDHKeyPair {
 
     static async generate() {
         let key = new ECDHKeyPair()
-        key._pair = await subtle.generateKey(
+        key._pair = await webcrypto.subtle.generateKey(
             {
                 name: "ECDH",
                 namedCurve: 'P-384'
@@ -302,7 +308,7 @@ export class ECDHKeyPair {
     }
 
     async deriveKey(publicKey: any) {
-        return subtle.deriveKey(
+        return webcrypto.subtle.deriveKey(
             {
                 name: 'ECDH',
                 public: publicKey
@@ -340,12 +346,12 @@ export class ECDHKeyPair {
     }
 
     async importPrivateKey(raw: any) {
-        if (raw instanceof crypto.webcrypto.CryptoKey) {
+        if (raw instanceof CryptoKeyInstance) {
             this._pair.privateKey = raw
             return raw
         }
         raw = str2ab(raw)
-        let key = await subtle.importKey(
+        let key = await webcrypto.subtle.importKey(
             'pkcs8',
             raw,
             {
@@ -362,14 +368,14 @@ export class ECDHKeyPair {
 
     async importPublicKey(raw: any) {
         //console.log('IMPORT PUBLIC KEY')
-        if (raw instanceof crypto.webcrypto.CryptoKey) {
+        if (raw instanceof CryptoKeyInstance) {
             //console.log('IMPORT PUBLIC KEY AS CRYPTO KEY')
             this._pair.publicKey = raw
             return raw
         }
         //console.log('IMPORT PUBLIC KEY AS RAW')
         raw = str2ab(raw)
-        let key = await subtle.importKey(
+        let key = await webcrypto.subtle.importKey(
             'raw',
             raw,
             {
@@ -395,7 +401,7 @@ export class HMAC {
 
     constructor(raw?: any, useSalt?: boolean) {
         this.useSalt = useSalt
-        if (raw instanceof crypto.webcrypto.CryptoKey) {
+        if (raw instanceof CryptoKeyInstance) {
             this._key = raw
         } else if (raw) {
             this._raw = str2ab(raw)
@@ -406,7 +412,7 @@ export class HMAC {
         if (this._key) {
             return this._key
         }
-        let key = await subtle.importKey(
+        let key = await webcrypto.subtle.importKey(
             'raw',
             this._raw,
             {
@@ -425,7 +431,7 @@ export class HMAC {
         if (this._raw) {
             return this.importKey()
         }
-        this._key = await subtle.generateKey(
+        this._key = await webcrypto.subtle.generateKey(
             {
                 name: 'HMAC',
                 hash: 'SHA-256'
@@ -454,13 +460,12 @@ export class HMAC {
         } else {
             encoded = str2ab(message)
         }
-        let result = await subtle.verify(
+        return await webcrypto.subtle.verify(
             "HMAC",
             await this.key(),
             signature,
             encoded
         )
-        return result
     }
 
     async sign(message: any) {
@@ -471,7 +476,7 @@ export class HMAC {
         } else {
             encoded = str2ab(message)
         }
-        let signature = await subtle.sign(
+        let signature = await webcrypto.subtle.sign(
             "HMAC",
             await this.key(),
             encoded
@@ -525,7 +530,7 @@ export function generateRandomString() {
 export async function decrypt(data: any, password: any) {
     let props: any = {password}
 
-    if (password instanceof crypto.webcrypto.CryptoKey) {
+    if (password instanceof CryptoKeyInstance) {
         props.key = password
     }
 
@@ -542,7 +547,7 @@ export async function decrypt(data: any, password: any) {
 export async function encrypt(data: any, password: any) {
     let props: any = {password}
 
-    if (password instanceof crypto.webcrypto.CryptoKey) {
+    if (password instanceof CryptoKeyInstance) {
         props = {key: password}
     }
 
@@ -562,7 +567,8 @@ export async function encryptHex(data: any, password: any) {
     let key = await encryptionKey.encrypt(data)
     if (!key) {
         return null
-    }importJwk
+    }
+    importJwk
     return bytesToHex(key)
 }
 
@@ -596,11 +602,10 @@ export async function hmacSign(msg: any, key: any) {
 }
 
 export async function exportJwk(key: any) {
-    let exported = await subtle.exportKey(
+    return await webcrypto.subtle.exportKey(
         'jwk',
         key
     )
-    return exported
 }
 
 export async function importJwk(jwk: any) {
@@ -625,9 +630,8 @@ export async function importJwk(jwk: any) {
     if (!algo) {
         return null
     }
-    let imported = await subtle.importKey('jwk', jwk, algo, true, jwk.key_ops)
-    //console.log('imported', imported, imported instanceof crypto.webcrypto.CryptoKey)
-    return imported
+    //console.log('imported', imported, imported instanceof CryptoKeyInstance)
+    return await webcrypto.subtle.importKey('jwk', jwk, algo, true, jwk.key_ops)
 }
 
 export function jwkToPem(jwk: any, opts: any = {}) {
@@ -656,20 +660,4 @@ export function getPublicJwk(jwk: any) {
     delete jwk.d
     jwk.key_ops = []
     return jwk
-}
-
-export async function sharedKey(privateKey: any, publicKey: any) {
-    return subtle.deriveKey(
-        {
-            name: 'ECDH',
-            public: publicKey
-        },
-        privateKey,
-        {
-            name: 'AES-GCM',
-            length: 256
-        },
-        true,
-        ['encrypt', 'decrypt']
-    )
 }

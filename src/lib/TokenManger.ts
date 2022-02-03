@@ -3,6 +3,7 @@ import {TokenManagerOptions} from "../../index";
 import Rest from "./rest/Rest";
 import {AxiosResponse} from "axios";
 
+const config = require('../../config.json')
 const jwt = require('jsonwebtoken')
 
 const e = createEmitter();
@@ -21,7 +22,7 @@ export class TokenManager {
         this._clientId = clientId;
         this._proof = options.proof;
         this._onUpdate = options.onUpdate
-        this._restClient = new Rest('http://localhost:3001/');
+        this._restClient = new Rest(config.baseUrl);
         this.getToken(this._clientId, this._proof);
         e.on('refreshToken', () => {
             this.auth(this._clientId, this._proof)
@@ -40,7 +41,9 @@ export class TokenManager {
                 this._rsa = result.data.publicKey;
                 this._onUpdate({Token: this._token, Key: this._rsa})
                 this.watch();
-            }).catch(console.log)
+            }).catch((e: Error)=>{
+                console.log(e.message)
+        })
     }
 
     private auth(clientId: string, proof: string) {
