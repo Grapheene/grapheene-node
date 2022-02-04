@@ -12,6 +12,7 @@ export interface KmsOptions {
 
 export interface TokenManagerOptions {
     proof: string;
+    authDir: string;
     onUpdate: Function;
 }
 
@@ -43,10 +44,16 @@ interface KeyRingOptions {
     uniqueName: string;
     name: string;
     data: Array<KeyRingData>
-    members: Array<Member>
+    members: Array<KeyRingMember>
     createdAt: string;
     updatedAt: string;
 }
+
+interface KeyRingMember {
+    role: string;
+    Member: Member;
+}
+
 
 declare enum StorageServices {
     S3 = 's3',

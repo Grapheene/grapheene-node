@@ -3,17 +3,27 @@ import {TokenManager} from "../TokenManger";
 import {Zokrates} from "../zk/Zokrates";
 import {AuthHeaders} from "../../../index";
 
+function sleep(ms: number) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
+}
+
 class AuthorizedRest extends Rest {
     private tokenManager: TokenManager;
     private zk: Zokrates;
 
-    constructor(base_url: string, clientId: string, zk: Zokrates) {
+    constructor(base_url: string, clientId: string, zk: Zokrates, authDir: string) {
         super(base_url)
         this.zk = zk;
         this.tokenManager = new TokenManager(clientId, {
             proof: JSON.stringify(this.zk.generateProof()),
-            onUpdate: this.updateRestHeaders
+            authDir: authDir,
+            onUpdate: this.updateRestHeaders,
         });
+        if(this.tokenManager.publicKey && this.tokenManager.jwt && this.tokenManager.ready){
+            this.updateRestHeaders({Token: this.tokenManager.jwt, Key: JSON.stringify(this.tokenManager.publicKey)});
+        }
     }
 
     private updateRestHeaders(headers: AuthHeaders) {
@@ -39,17 +49,17 @@ class AuthorizedRest extends Rest {
 
     async get(endpoint: string, params?: any) {
         await this.ensureHeaders();
-        return super.post(endpoint, params)
+        return super.get(endpoint, params)
     }
 
     async put(endpoint: string, params?: any) {
         await this.ensureHeaders();
-        return super.post(endpoint, params)
+        return super.put(endpoint, params)
     }
 
     async del(endpoint: string) {
         await this.ensureHeaders();
-        return super.post(endpoint)
+        return super.del(endpoint)
     }
 
 

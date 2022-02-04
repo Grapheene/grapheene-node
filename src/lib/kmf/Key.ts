@@ -1,4 +1,4 @@
-import {KeyData, KeyDataEnum, KeyOptions} from "../../../index";
+import {KeyData, KeyOptions} from "../../../index";
 import {Database} from "sqlite3";
 
 
@@ -7,6 +7,7 @@ export default class Key {
     active: boolean;
     createdAt: string;
     updatedAt: string;
+    data?: any;
     private readonly _db: Database;
 
     constructor(options: KeyOptions, DB: Database) {
@@ -15,32 +16,44 @@ export default class Key {
         this.createdAt = options.createdAt;
         this.updatedAt = options.updatedAt;
         this._db = DB;
+
         if (options.hasOwnProperty('data')) {
             this.save(this.uuid, this.active, options.data)
         }
     }
 
     private save(uuid: string, active: boolean, keyData: KeyData) {
-        let stmt = this._db.prepare(`INSERT INTO keystore
-                                     VALUES (?, ?, ?)`);
-        stmt.run(uuid, active ? 1 : 0, keyData);
-        stmt.finalize();
+        const isActive = active ? 1 : 0
 
-        this._db.each(`SELECT *
+        this._db.get(`SELECT *
                        FROM keystore
-                       WHERE uuid = ${uuid}`, function (err, row) {
-            console.log(row.id + ': ' + row.uuid);
+                       WHERE uuid = '${uuid}'`, (err, row) => {
+            if (err) {
+                console.log(err)
+            }
+            if(!row){
+                this._db.run('INSERT INTO keystore VALUES (?, ?, ?)', [uuid, isActive, JSON.stringify(keyData)]);
+            }
         });
     }
 
-    load(type: KeyDataEnum) {
-        let key: KeyData;
-        this._db.get(`SELECT *
-                      FROM keystore
-                      WHERE uuid = ${this.uuid}`, (err, row) => {
-            key = JSON.parse(row.data);
-        });
-        return key[type];
+    load(type: 'privateKey' | 'publicKey'): Promise<string> {
+        return new Promise((resolve, reject) => {
+            let key: any;
+            this._db.get(`SELECT *
+                          FROM keystore
+                          WHERE uuid = '${this.uuid}'`, (err, row) => {
+                console.log(this.uuid)
+                if (row) {
+
+                    key = JSON.parse(row.data);
+                    resolve(key[type]);
+                } else {
+                    reject('No key data found for ' + this.uuid)
+                }
+            });
+        })
+
     }
 
 }

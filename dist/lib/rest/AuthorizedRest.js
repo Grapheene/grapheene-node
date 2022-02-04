@@ -11,14 +11,23 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const Rest_1 = require("./Rest");
 const TokenManger_1 = require("../TokenManger");
+function sleep(ms) {
+    return new Promise((resolve) => {
+        setTimeout(resolve, ms);
+    });
+}
 class AuthorizedRest extends Rest_1.default {
-    constructor(base_url, clientId, zk) {
+    constructor(base_url, clientId, zk, authDir) {
         super(base_url);
         this.zk = zk;
         this.tokenManager = new TokenManger_1.TokenManager(clientId, {
             proof: JSON.stringify(this.zk.generateProof()),
-            onUpdate: this.updateRestHeaders
+            authDir: authDir,
+            onUpdate: this.updateRestHeaders,
         });
+        if (this.tokenManager.publicKey && this.tokenManager.jwt && this.tokenManager.ready) {
+            this.updateRestHeaders({ Token: this.tokenManager.jwt, Key: JSON.stringify(this.tokenManager.publicKey) });
+        }
     }
     updateRestHeaders(headers) {
         super.setHeaders(headers);
@@ -47,29 +56,29 @@ class AuthorizedRest extends Rest_1.default {
     }
     get(endpoint, params) {
         const _super = Object.create(null, {
-            post: { get: () => super.post }
+            get: { get: () => super.get }
         });
         return __awaiter(this, void 0, void 0, function* () {
             yield this.ensureHeaders();
-            return _super.post.call(this, endpoint, params);
+            return _super.get.call(this, endpoint, params);
         });
     }
     put(endpoint, params) {
         const _super = Object.create(null, {
-            post: { get: () => super.post }
+            put: { get: () => super.put }
         });
         return __awaiter(this, void 0, void 0, function* () {
             yield this.ensureHeaders();
-            return _super.post.call(this, endpoint, params);
+            return _super.put.call(this, endpoint, params);
         });
     }
     del(endpoint) {
         const _super = Object.create(null, {
-            post: { get: () => super.post }
+            del: { get: () => super.del }
         });
         return __awaiter(this, void 0, void 0, function* () {
             yield this.ensureHeaders();
-            return _super.post.call(this, endpoint);
+            return _super.del.call(this, endpoint);
         });
     }
 }

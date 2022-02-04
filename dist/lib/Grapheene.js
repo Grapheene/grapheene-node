@@ -24,10 +24,11 @@ class Grapheene {
         this.zkDir = this.filesDir + '/zk';
         this.cryptoDir = this.filesDir + '/encrypt';
         this.dbDir = this.filesDir + '/db';
+        this.authDir = this.filesDir + '/auth';
         this.ensureDirExist();
         this.setupZK();
-        this._restClient = new AuthorizedRest_1.default(config.baseUrl, this.clientId, this.zk);
-        this._db = new sqlite.Database(this.dbDir + '/some.db', (err) => {
+        this._restClient = new AuthorizedRest_1.default(config.baseUrl, this.clientId, this.zk, this.authDir);
+        this._db = new sqlite.Database(this.dbDir + '/grapheene.db', (err) => {
             if (err) {
                 throw new Error(err.message);
             }
@@ -40,6 +41,7 @@ class Grapheene {
         fs.ensureDirSync(this.zkDir);
         fs.ensureDirSync(this.cryptoDir);
         fs.ensureDirSync(this.dbDir);
+        fs.ensureDirSync(this.authDir);
     }
     setupZK() {
         this.zk = new Zokrates_1.Zokrates(this.clientId, this.apiKey, { path: this.zkDir });

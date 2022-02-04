@@ -46,7 +46,6 @@ class Rest {
         if (config.method !== 'get' && config.method !== 'del') {
             config.data = params;
         }
-
         return this._instance.request(config)
     }
 

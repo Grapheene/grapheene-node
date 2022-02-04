@@ -1,5 +1,5 @@
 import Key from "./Key";
-import {KeyData, KeyDataEnum, MemberOptions} from "../../../index";
+import {KeyData, MemberOptions} from "../../../index";
 import {Database} from "sqlite3";
 import * as encryption from "../encryption";
 
@@ -23,25 +23,31 @@ export default class Member {
         }
         this.uniqueName = options.uuid + ':' + options.name
         for (let x in options.keys) {
+
             this._keys.push(new Key(options.keys[x], this._db))
         }
 
     }
 
-    private getKeys(): KeyData {
+    private async getKeys(): Promise<KeyData> {
         return {
-            privateKey: this._master._keys[0].load(KeyDataEnum.privateKey),
-            publicKey: this._keys[0].load(KeyDataEnum.publicKey)
+            privateKey: await this._master.keys[0].load('privateKey'),
+            publicKey: await this._keys[0].load('publicKey')
         }
     }
 
-    encrypt(data: any): Promise<string> {
-        return encryption.encrypt(data, this.getKeys())
+    async encrypt(data: any): Promise<string> {
+        console.log(await this.getKeys())
+        return encryption.encrypt(data,await this.getKeys())
 
     }
 
-    decrypt(encrypted: any): Promise<string> {
-        return encryption.encrypt(encrypted, this.getKeys())
+    async decrypt(encrypted: any): Promise<string> {
+        return encryption.decrypt(encrypted, await this.getKeys())
+    }
+
+    get keys(){
+        return this._keys;
     }
 
 }

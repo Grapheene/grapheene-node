@@ -30,7 +30,7 @@ export const encrypt = (data: string | object | number, keys: KeyData): Promise<
                 let ecdh = new GCrypto.ECDHKeyPair()
                 await ecdh.importPrivateKey(secrets.privateKey)
 
-                await ecdh.importPublicKey(await GCrypto.importJwk(GCrypto.pemToJwk(secrets.publicKey)))
+                await ecdh.importPublicKey(secrets.publicKey)
 
                 let aesKey = await ecdh.deriveKey(ecdh.publicKey)
                 resolve(await GCrypto.encrypt(data, aesKey))
@@ -46,7 +46,7 @@ export const decrypt = (encrypted: string, keys: KeyData): Promise<string> => {
             .then(async (secrets: CryptoKeys) => {
                 let ecdh = new GCrypto.ECDHKeyPair()
                 await ecdh.importPrivateKey(secrets.privateKey)
-                await ecdh.importPublicKey(await GCrypto.importJwk(GCrypto.pemToJwk(secrets.publicKey)))
+                await ecdh.importPublicKey(secrets.publicKey)
                 let aesKey = await ecdh.deriveKey(ecdh.publicKey)
                 GCrypto.decrypt(encrypted, aesKey)
                     .then((decrypted) => {

@@ -51,7 +51,6 @@ const Grapheene = new Grapheene({ClientID, OktaAPIKey, SDKKey})
 
 
  */
-
 const Grapheene = require('./dist')('US34552ba2262d4dc0ac2268f82f4ede23', 'SK4d1286e70fe3408fa8c10430b293d946');
 Grapheene.kmf.ring.create('keyRingName')
     .then(async (ring) => {
@@ -59,14 +58,36 @@ Grapheene.kmf.ring.create('keyRingName')
             name: 'sarmad@grapheene.net'
         });
 
+        console.log(ring.members)
         // This looks up the master key in SQlite and returns then encrypts the data
-        const encrypted = member.encrypt('somedata');
+        const encrypted = await member.encrypt('somedata');
         console.log('Encrypted: ',encrypted)
         // This looks up the members public key in SQlite and returns then decrypts the data
-        const decrypted = member.decrypt(encrypted);
+        const decrypted  = await  member.decrypt(encrypted);
         console.log('Decrypted: ',decrypted)
-    });
+
+        setTimeout(async ()=>{
+            await ring.delMember('sarmad@grapheene.net')
+            console.log('Deleted \'sarmad@grapheene.net\'')
+        }, 10000)
+    }).catch((e)=>{
+        console.log(e.message)
+})
+
+
 /*
+const Grapheene = require('./dist')('US34552ba2262d4dc0ac2268f82f4ede23', 'SK4d1286e70fe3408fa8c10430b293d946');
+Grapheene.kmf.ring.create('keyRingName')
+    .then(async (ring) => {
+       await ring.addMember({
+            name: 'sarmad@grapheene.net'
+        });
+        console.log(ring.members)
+    }).catch((e)=>{
+    console.log(e.message)
+})
+/*
+
 Grapheene.ring.get('channelName | channelId')
    .then((ring) => {
 

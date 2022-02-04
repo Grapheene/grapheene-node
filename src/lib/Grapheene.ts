@@ -20,6 +20,7 @@ export class Grapheene {
     private readonly zkDir: string;
     private readonly cryptoDir: string;
     private readonly dbDir: string;
+    private readonly authDir: string;
     private readonly _restClient: AuthorizedRest;
     private readonly _db: Database;
 
@@ -47,11 +48,12 @@ export class Grapheene {
         this.zkDir = this.filesDir + '/zk';
         this.cryptoDir = this.filesDir + '/encrypt';
         this.dbDir = this.filesDir + '/db';
+        this.authDir = this.filesDir + '/auth';
 
         this.ensureDirExist()
         this.setupZK()
-        this._restClient = new AuthorizedRest(config.baseUrl, this.clientId, this.zk);
-        this._db = new sqlite.Database(this.dbDir + '/some.db', (err: Error) => {
+        this._restClient = new AuthorizedRest(config.baseUrl, this.clientId, this.zk, this.authDir);
+        this._db = new sqlite.Database(this.dbDir + '/grapheene.db', (err: Error) => {
             if (err) {
                 throw new Error(err.message)
             }
@@ -66,6 +68,7 @@ export class Grapheene {
         fs.ensureDirSync(this.zkDir)
         fs.ensureDirSync(this.cryptoDir)
         fs.ensureDirSync(this.dbDir)
+        fs.ensureDirSync(this.authDir)
     }
 
     private setupZK() {
