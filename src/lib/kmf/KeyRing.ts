@@ -6,6 +6,7 @@ import {Database} from "sqlite3";
 
 // TODO: connect ring data / storage
 // TODO: Hook into the dashboard API to pull program files
+// TODO: Add mongo db connector
 
 export default class KeyRing {
     uuid: string;
