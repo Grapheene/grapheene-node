@@ -4,7 +4,8 @@ import {KeyData, KeyRingOptions, MemberOptions} from "../../../index";
 import Rest from "../rest/Rest";
 import {Database} from "sqlite3";
 
-// TODO: connect ring data
+// TODO: connect ring data / storage
+// TODO: Hook into the dashboard API to pull program files
 
 export default class KeyRing {
     uuid: string;
