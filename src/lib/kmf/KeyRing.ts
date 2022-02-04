@@ -4,6 +4,7 @@ import {KeyData, KeyRingOptions, MemberOptions} from "../../../index";
 import Rest from "../rest/Rest";
 import {Database} from "sqlite3";
 
+// TODO: connect ring data
 
 export default class KeyRing {
     uuid: string;
@@ -88,6 +89,13 @@ export default class KeyRing {
     }
 
     async addMember(data: MemberOptions) {
+
+        for (let x in this.members) {
+            if (this.members[x].name === data.name) {
+                return this.members[x];
+            }
+        }
+
         const result = await this._restClient.post('/kmf/ring/' + this.uuid + '/member/add', data);
         let member: Member;
         if (result.status === 200) {
@@ -104,11 +112,20 @@ export default class KeyRing {
         if (this.members.length === 0) {
             throw new Error('Key ring has no members');
         } else {
+            let members: Array<Member> = [];
             for (let x in this.members) {
                 if (this.members[x].uuid === nameOrUUID || this.members[x].name === nameOrUUID) {
                     await this._restClient.del('/kmf/ring/' + this.uuid + '/member/' + this.members[x].uuid);
+                    this.members[x].destroy().then((message) => {
+                        console.log(message)
+                    }).catch(console.log)
+
+                } else {
+                    members.push(this.members[x]);
                 }
             }
+
+            this.members = members;
         }
     }
 }

@@ -9,6 +9,7 @@ export default class Member {
     private readonly _db: Database;
     private readonly _master: Member;
     private readonly _keys: Array<Key> = [];
+    private _activeKey: string;
 
     uuid: string;
     name: string;
@@ -30,15 +31,42 @@ export default class Member {
     }
 
     private async getKeys(): Promise<KeyData> {
+        let privateKey, publicKey;
+        try {
+            privateKey= await this._master.keys[0].load('privateKey');
+        } catch (e) {
+            console.log("Unable to load master key");
+            throw new Error(e.message)
+        }
+        try {
+            publicKey = await this._keys[0].load('publicKey');
+        } catch (e) {
+            console.log("Unable to load member key "+this._keys[0].uuid);
+            throw new Error(e.message)
+        }
+
         return {
-            privateKey: await this._master.keys[0].load('privateKey'),
-            publicKey: await this._keys[0].load('publicKey')
+            privateKey: privateKey,
+            publicKey: publicKey
         }
     }
 
+    destroy(): Promise<string> {
+        return new Promise(async (resolve, reject) => {
+            try {
+                for (let x in this._keys) {
+                    await this._keys[x].destroy()
+                }
+                resolve(this.uuid + ' Keys Destroyed')
+            } catch (e) {
+                reject(e)
+            }
+
+        });
+    }
+
     async encrypt(data: any): Promise<string> {
-        console.log(await this.getKeys())
-        return encryption.encrypt(data,await this.getKeys())
+        return encryption.encrypt(data, await this.getKeys())
 
     }
 
@@ -46,7 +74,7 @@ export default class Member {
         return encryption.decrypt(encrypted, await this.getKeys())
     }
 
-    get keys(){
+    get keys() {
         return this._keys;
     }
 

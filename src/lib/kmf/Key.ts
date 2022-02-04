@@ -26,12 +26,12 @@ export default class Key {
         const isActive = active ? 1 : 0
 
         this._db.get(`SELECT *
-                       FROM keystore
-                       WHERE uuid = '${uuid}'`, (err, row) => {
+                      FROM keystore
+                      WHERE uuid = '${uuid}'`, (err, row) => {
             if (err) {
                 console.log(err)
             }
-            if(!row){
+            if (!row) {
                 this._db.run('INSERT INTO keystore VALUES (?, ?, ?)', [uuid, isActive, JSON.stringify(keyData)]);
             }
         });
@@ -43,13 +43,28 @@ export default class Key {
             this._db.get(`SELECT *
                           FROM keystore
                           WHERE uuid = '${this.uuid}'`, (err, row) => {
-                console.log(this.uuid)
                 if (row) {
-
                     key = JSON.parse(row.data);
                     resolve(key[type]);
                 } else {
                     reject('No key data found for ' + this.uuid)
+                }
+            });
+        })
+
+    }
+
+    destroy(): Promise<string> {
+        return new Promise((resolve, reject) => {
+            let key: any;
+            this._db.run(`DELETE
+                          FROM keystore
+                          WHERE uuid = ?`, [this.uuid], (err: Error, row: any) => {
+                if (err) {
+                    reject('No key data found for ' + this.uuid)
+                } else {
+                    resolve(this.uuid);
+
                 }
             });
         })
