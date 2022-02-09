@@ -40,7 +40,7 @@ export class Grapheene {
         this.clientId = clientId;
 
 
-        this.filesDir = path.dirname(require.main.filename || process.mainModule.filename) + '/files'
+        this.filesDir = path.dirname(require.main.filename || process.mainModule.filename) + path.sep+'files'
 
         if (!this.apiKey.startsWith('SK') || !this.apiKey) {
             throw new Error('Invalid APK Key')
@@ -50,15 +50,15 @@ export class Grapheene {
             throw new Error('Invalid Client ID')
         }
 
-        this.zkDir = this.filesDir + '/zk';
-        this.cryptoDir = this.filesDir + '/encrypt';
-        this.dbDir = this.filesDir + '/db';
-        this.authDir = this.filesDir + '/auth';
+        this.zkDir = this.filesDir + path.sep+'zk';
+        this.cryptoDir = this.filesDir + path.sep+'encrypt';
+        this.dbDir = this.filesDir + path.sep+'db';
+        this.authDir = this.filesDir + path.sep+'auth';
 
         this.ensureDirExist()
         this.setupZK()
         this._restClient = new AuthorizedRest(config.baseUrl, this.clientId, this.zk, this.authDir);
-        this._db = new sqlite.Database(this.dbDir + '/grapheene.db', (err: Error) => {
+        this._db = new sqlite.Database(this.dbDir + path.sep+'grapheene.db', (err: Error) => {
             if (err) {
                 throw new Error(err.message)
             }

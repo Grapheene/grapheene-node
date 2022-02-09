@@ -27,28 +27,31 @@ export class Zokrates {
     }
 
     private setPaths(_storePath: string) {
-        const os = require('os');
+        const os = process.platform;
+        console.log(os);
         const match = dir.match(/dist/);
         fs.ensureDirSync(_storePath);
-
         if (!match) {
-            this._libRoot = dir + '/zokrates'
-        } else {
-            this._libRoot = dir.replace('dist', 'zokrates')
+            this._libRoot = dir + path.sep+'zokrates';
+        }
+        else {
+            this._libRoot = dir.replace('dist', 'zokrates');
+            console.log(this._libRoot);
         }
         this._zokRoot = this._libRoot;
         if (os === 'darwin' || os === 'win32') {
-            this._execPath = this._libRoot + '/' + os
+            this._execPath = this._libRoot + path.sep + os;
             this._libRoot = this._execPath;
-        } else {
-            this._execPath = this._libRoot + '/linux'
-            this._libRoot = this._execPath
         }
-
+        else {
+            this._execPath = this._libRoot + path.sep+'linux';
+            this._libRoot = this._execPath;
+        }
         if (os === 'win32') {
-            this._execPath = this._execPath + '/zokrates.exe '
-        } else {
-            this._execPath = this._execPath + '/zokrates '
+            this._execPath = this._execPath + path.sep+'zokrates.exe ';
+        }
+        else {
+            this._execPath = this._execPath + path.sep+'zokrates ';
         }
         fs.ensureDirSync(this._execPath);
         fs.ensureDirSync(this._libRoot);
@@ -73,20 +76,20 @@ export class Zokrates {
     }
 
     generateProof(): Proof | boolean {
-        const command = `${this._execPath} generate-proof --input=${this._storePath}/out --proving-key-path=${this._storePath}/proving.key --witness=${this._storePath}/witness --proof-path=${this._storePath}/proof.json`
+        const command = `${this._execPath} generate-proof --input=${this._storePath}${path.sep}out --proving-key-path=${this._storePath}${path.sep}proving.key --witness=${this._storePath}${path.sep}witness --proof-path=${this._storePath}${path.sep}proof.json`;
         const compiled = this.run(command);
         if (!compiled.error) {
-            return fs.readJsonSync(`${this._storePath}/proof.json`)
+            return fs.readJsonSync(`${this._storePath}${path.sep}proof.json`);
         }
-        console.log(compiled.error)
+        console.log(compiled.error);
         return false;
     }
 
     computeWitness(field1: string, field2: string, field3: string, field4: string) {
-        const command = this._execPath + `compute-witness -a ${field1} ${field2} ${field3} ${field4} --input=${this._storePath}/out --output=${this._storePath}/witness`
+        const command = this._execPath + `compute-witness -a ${field1} ${field2} ${field3} ${field4} --input=${this._storePath}${path.sep}out --output=${this._storePath}${path.sep}witness`;
         const computeWitness = this.run(command);
         if (!computeWitness.error) {
-            return computeWitness.result
+            return computeWitness.result;
         }
         return false;
     }
@@ -98,9 +101,7 @@ export class Zokrates {
         for (let x in split) {
             numbers.push(split[x].charCodeAt(0));
         }
-
         let chunksize = numbers.join('').length / 6;
-
         let i, j, temporary, chunk = chunksize;
         for (i = 0, j = numbers.length; i < j; i += chunk) {
             temporary = numbers.slice(i, i + chunk);
