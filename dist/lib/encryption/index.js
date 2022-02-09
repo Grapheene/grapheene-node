@@ -9,8 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.decrypt = exports.encrypt = exports.configureKeys = void 0;
+exports.decryptFile = exports.encryptFile = exports.decrypt = exports.encrypt = exports.configureKeys = void 0;
 const GCrypto = require("./Crypto");
+const fs = require("fs-extra");
 const configureKeys = (keys) => __awaiter(void 0, void 0, void 0, function* () {
     let hmac, privateKey, publicKey;
     if (keys.hasOwnProperty('hmac')) {
@@ -60,4 +61,38 @@ const decrypt = (encrypted, keys) => {
     });
 };
 exports.decrypt = decrypt;
+const encryptFile = (filePath, keys) => {
+    return new Promise((resolve, reject) => {
+        (0, exports.configureKeys)(keys)
+            .then((secrets) => __awaiter(void 0, void 0, void 0, function* () {
+            let ecdh = new GCrypto.ECDHKeyPair();
+            yield ecdh.importPrivateKey(secrets.privateKey);
+            yield ecdh.importPublicKey(secrets.publicKey);
+            let aesKey = yield ecdh.deriveKey(ecdh.publicKey);
+            const encrypted = yield GCrypto.encryptFileStream(filePath, aesKey);
+            console.log(encrypted);
+            resolve(true);
+        }))
+            .catch((e) => {
+            console.log(e);
+            reject(e);
+        });
+    });
+};
+exports.encryptFile = encryptFile;
+const decryptFile = (filePath, keys) => {
+    return new Promise((resolve, reject) => {
+        (0, exports.configureKeys)(keys)
+            .then((secrets) => __awaiter(void 0, void 0, void 0, function* () {
+            let ecdh = new GCrypto.ECDHKeyPair();
+            yield ecdh.importPrivateKey(secrets.privateKey);
+            yield ecdh.importPublicKey(secrets.publicKey);
+            let aesKey = yield ecdh.deriveKey(ecdh.publicKey);
+            const decrypted = yield GCrypto.decryptFileStream(filePath, aesKey);
+            resolve(true);
+        }))
+            .catch(reject);
+    });
+};
+exports.decryptFile = decryptFile;
 //# sourceMappingURL=index.js.map

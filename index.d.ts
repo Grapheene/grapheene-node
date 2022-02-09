@@ -4,10 +4,9 @@ import KeyRingData from "./src/lib/kmf/KeyRingData";
 import Member from "./src/lib/kmf/Member";
 import Key from "./src/lib/kmf/Key";
 
-export interface KmsOptions {
-    client_id: string;
-    api_key: string;
-    rest_client: AxiosInstance;
+export interface GrapheeneOptions {
+    medium?: 'cloud' | 'local';
+    dir?: string;
 }
 
 export interface TokenManagerOptions {
@@ -57,8 +56,20 @@ interface KeyRingMember {
 
 declare enum StorageServices {
     S3 = 's3',
+    CLOUD = 'cloud',
     LOCAL = 'local',
     UNSAVED = 'unsaved'
+}
+
+interface StorageOptions {
+    medium: 'cloud' | 'local' | 'unsaved';
+}
+
+interface KeyRingDataRequest {
+    name: string;
+    path: string;
+    encrypted?: any;
+    service: 'cloud' | 'local' | 'unsaved';
 }
 
 interface KeyRingDataOptions {
@@ -88,10 +99,4 @@ interface KeyData {
     privateKey?: string;
     hmac?: string;
     publicKey?: string;
-}
-
-declare enum KeyDataEnum {
-    privateKey = 'privateKey',
-    hmac = 'hmac',
-    publicKey = 'publicKey'
 }

@@ -1,5 +1,5 @@
 import Rest from "./Rest";
-import {TokenManager} from "../TokenManger";
+import {TokenManager} from "../TokenManager";
 import {Zokrates} from "../zk/Zokrates";
 import {AuthHeaders} from "../../../index";
 

@@ -56,7 +56,6 @@ export default class Key {
 
     destroy(): Promise<string> {
         return new Promise((resolve, reject) => {
-            let key: any;
             this._db.run(`DELETE
                           FROM keystore
                           WHERE uuid = ?`, [this.uuid], (err: Error, row: any) => {

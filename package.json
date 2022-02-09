@@ -28,6 +28,8 @@
     "atob": "^2.1.2",
     "axios": "^0.24.0",
     "btoa": "^1.2.1",
+    "filereader": "^0.10.3",
+    "form-data": "^4.0.0",
     "fs-extra": "^10.0.0",
     "jsonwebtoken": "^8.5.1",
     "sqlite3": "^5.0.2",

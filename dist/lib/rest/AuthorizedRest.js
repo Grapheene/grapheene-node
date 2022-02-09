@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const Rest_1 = require("./Rest");
-const TokenManger_1 = require("../TokenManger");
+const TokenManager_1 = require("../TokenManager");
 function sleep(ms) {
     return new Promise((resolve) => {
         setTimeout(resolve, ms);
@@ -20,7 +20,7 @@ class AuthorizedRest extends Rest_1.default {
     constructor(base_url, clientId, zk, authDir) {
         super(base_url);
         this.zk = zk;
-        this.tokenManager = new TokenManger_1.TokenManager(clientId, {
+        this.tokenManager = new TokenManager_1.TokenManager(clientId, {
             proof: JSON.stringify(this.zk.generateProof()),
             authDir: authDir,
             onUpdate: this.updateRestHeaders,

@@ -1,15 +1,20 @@
 import AuthorizedRest from "./rest/AuthorizedRest";
 import {Zokrates} from "./zk/Zokrates";
 import {KMF} from "./kmf/KMF";
-import TypedArray = NodeJS.TypedArray;
+
 import {Database} from "sqlite3";
+import {Storage} from "./storage/Storage";
+import {GrapheeneOptions} from "../../index";
 
 const config = require('../../config.json')
 const sqlite = require('sqlite3').verbose();
 
 const fs = require('fs-extra');
 const path = require('path');
-const defaults = {}
+const defaults = {
+    medium: 'local',
+    dir: './'
+}
 
 
 export class Grapheene {
@@ -24,12 +29,12 @@ export class Grapheene {
     private readonly _restClient: AuthorizedRest;
     private readonly _db: Database;
 
-    private _options: string;
+    private _options: GrapheeneOptions;
     private _kmf: KMF;
     private _zk: Zokrates;
     private _storage: any;
 
-    constructor(clientId: string, apiKey: string, opts?: any) {
+    constructor(clientId: string, apiKey: string, opts?: GrapheeneOptions) {
         this._options = Object.assign({}, defaults, opts);
         this.apiKey = apiKey;
         this.clientId = clientId;
@@ -60,7 +65,8 @@ export class Grapheene {
             this.setupDb();
         });
         this.setupKMS()
-
+        this.setupStorage()
+        this._kmf.ring.storage = this._storage;
     }
 
     private ensureDirExist() {
@@ -102,20 +108,12 @@ export class Grapheene {
         this.kmf = new KMF(this._restClient, this._db);
     }
 
+    private setupStorage(){
+        this.storage = new Storage({medium: this._options.medium}, this._restClient, this._kmf)
+    }
+
     private set zk(zk: Zokrates) {
         this._zk = zk;
-    }
-
-    save(filePath: string, data: string | TypedArray | DataView) {
-        this.createDir(filePath);
-        fs.writeFileSync(filePath, data)
-    }
-
-    private createDir(filePath: string) {
-        const seperator = path.sep;
-        let regEx = new RegExp(`(^${seperator}.+)(${seperator}.+$)`);
-        const match = filePath.match(regEx)
-        fs.ensureDirSync(match[1])
     }
 
     get zk() {
@@ -130,7 +128,7 @@ export class Grapheene {
         return this._kmf;
     }
 
-    private set storage(storage: KMF) {
+    set storage(storage: Storage) {
         this._storage = storage;
     }
 

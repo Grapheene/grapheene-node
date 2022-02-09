@@ -1,6 +1,7 @@
 import {CryptoKeys, KeyData} from "../../../index";
 import * as GCrypto from "./Crypto";
 import * as crypto from "crypto";
+const fs = require("fs-extra");
 
 export const configureKeys = async (keys: KeyData) => {
 
@@ -52,6 +53,44 @@ export const decrypt = (encrypted: string, keys: KeyData): Promise<string> => {
                     .then((decrypted) => {
                         resolve(decrypted)
                     })
+            })
+            .catch(reject)
+    })
+};
+
+export const encryptFile = (filePath: string, keys: KeyData): Promise<any> => {
+    return new Promise((resolve, reject) => {
+        configureKeys(keys)
+            .then(async (secrets: CryptoKeys) => {
+                let ecdh = new GCrypto.ECDHKeyPair()
+                await ecdh.importPrivateKey(secrets.privateKey)
+
+                await ecdh.importPublicKey(secrets.publicKey)
+
+                let aesKey = await ecdh.deriveKey(ecdh.publicKey)
+
+                const encrypted = await GCrypto.encryptFileStream(filePath, aesKey)
+                console.log(encrypted)
+                resolve(true)
+
+            })
+            .catch((e)=>{
+                console.log(e)
+                reject(e)
+            })
+    })
+};
+
+export const decryptFile = (filePath: string, keys: KeyData): Promise<any> => {
+    return new Promise((resolve, reject) => {
+        configureKeys(keys)
+            .then(async (secrets: CryptoKeys) => {
+                let ecdh = new GCrypto.ECDHKeyPair()
+                await ecdh.importPrivateKey(secrets.privateKey)
+                await ecdh.importPublicKey(secrets.publicKey)
+                let aesKey = await ecdh.deriveKey(ecdh.publicKey)
+                const decrypted = await GCrypto.decryptFileStream(filePath, aesKey)
+                resolve(true)
             })
             .catch(reject)
     })

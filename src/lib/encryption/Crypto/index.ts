@@ -1,6 +1,10 @@
 import * as crypto from "crypto";
+
 const atob = require('atob');
 const btoa = require('btoa');
+const FileReader = require('filereader');
+const fs = require("fs-extra")
+const path = require("path")
 
 let webcrypto: any, CryptoKeyInstance: any;
 
@@ -159,11 +163,83 @@ export class AESKey {
             })
     }
 
+    async encryptFileStream(filePath: string) {
+        const sp = filePath.split(path.sep);
+        const fileName = sp[sp.length - 1];
+        const outPath = filePath.replace(fileName, `enc_${fileName}`);
+        const rs = fs.createReadStream(filePath);
+        const of = fs.createWriteStream(outPath);
+        return new Promise((resolve, reject) => {
+
+            rs.on('open', () => {
+                console.log('File opened')
+            })
+            rs.on('data', async (chunk: any) => {
+                const encrypted = await this.encrypt(chunk);
+                if(encrypted){
+                    of.write(encrypted);
+                }
+            })
+            rs.on('close', () => {
+                console.log('File closed')
+            })
+
+            rs.on('end', function () {
+                let s = this;
+                fs.unlinkSync(filePath);
+                fs.rename(outPath, filePath)
+                    .then(() => {
+                        s.destroy();
+                        resolve(true)
+                    })
+            })
+            rs.on('error', (err: Error) => {
+                reject(err.message)
+            })
+        })
+    }
+
+    async decryptFileStream(filePath: string) {
+        const sp = filePath.split(path.sep);
+        const fileName = sp[sp.length - 1];
+        const outPath = filePath.replace(fileName, `denc_${fileName}`);
+        const rs = fs.createReadStream(filePath);
+        const of = fs.createWriteStream(outPath);
+        return new Promise((resolve, reject) => {
+
+            rs.on('open', () => {
+                console.log('File opened')
+            })
+            rs.on('data', async (chunk: any) => {
+                const decrypted = await this.decrypt(chunk);
+                if(decrypted){
+                    of.write(decrypted);
+                }
+            })
+            rs.on('close', () => {
+                console.log('File closed')
+            })
+
+            rs.on('end', function () {
+                let s = this;
+                fs.unlinkSync(filePath);
+                fs.rename(outPath, filePath)
+                    .then(() => {
+                        s.destroy();
+                        resolve(true)
+                    })
+            })
+            rs.on('error', (err: Error) => {
+                reject(err.message)
+            })
+        })
+    }
+
     async encryptFile(file: any) {
         const fr: any = new FileReader()
         return new Promise(resolve => {
             fr.onloadstart = async () => {
-                //console.log('Loading file...')
+                console.log('Loading file...')
             }
             fr.onload = async () => {
                 const salt = webcrypto.getRandomValues(new Uint8Array(16))
@@ -192,7 +268,7 @@ export class AESKey {
         })
     }
 
-    async decryptFile(file: any, type: any) {
+    async decryptFile(file: any, type?: any) {
         const fr: any = new FileReader()
         return new Promise(resolve => {
             fr.onloadstart = async () => {
@@ -572,7 +648,7 @@ export async function encryptHex(data: any, password: any) {
     return bytesToHex(key)
 }
 
-export async function decryptFile(file: any, password: any, type: any) {
+export async function decryptFile(file: any, password: any, type?: any) {
     let decryptionKey = new AESKey({password})
     let key = await decryptionKey.decryptFile(file, type)
     if (!key) {
@@ -588,6 +664,38 @@ export async function encryptFile(file: any, password: any) {
         return null
     }
     return [keyArray[0], keyArray[1]]
+}
+
+export async function encryptFileStream(file: any, password: any) {
+    let props: any = {password}
+
+    if (password instanceof CryptoKeyInstance) {
+        props = {key: password}
+    }
+
+    let encryptionKey = new AESKey(props)
+
+    let keyArray: any = await encryptionKey.encryptFileStream(file)
+    if (!keyArray) {
+        return null
+    }
+    return file
+}
+
+export async function decryptFileStream(file: any, password: any) {
+    let props: any = {password}
+
+    if (password instanceof CryptoKeyInstance) {
+        props = {key: password}
+    }
+
+    let encryptionKey = new AESKey(props)
+
+    let keyArray: any = await encryptionKey.decryptFileStream(file)
+    if (!keyArray) {
+        return null
+    }
+    return file
 }
 
 export async function generateEncryptedKey(password: any) {

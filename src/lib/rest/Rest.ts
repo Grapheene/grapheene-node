@@ -1,4 +1,5 @@
 import axios, {AxiosInstance, AxiosResponse} from "axios";
+const FormData = require('form-data');
 
 class Rest {
     protected _instance: AxiosInstance;
@@ -28,6 +29,10 @@ class Rest {
         return this._request(endpoint, 'PUT', params)
     }
 
+    multiPartForm(endpoint: string, params: any) {
+        return this._request(endpoint, 'FORM', params)
+    }
+
     del(endpoint: string) {
         return this._request(endpoint, 'DELETE')
     }
@@ -39,13 +44,28 @@ class Rest {
             method: method.toLowerCase()
         }
 
+        config.headers["Content-Type"] = 'application/json'
+
         if (config.method === 'get') {
             config.params = params;
         }
 
-        if (config.method !== 'get' && config.method !== 'del') {
+
+        if (config.method !== 'get' && config.method !== 'del' && config.method !== 'form') {
             config.data = params;
         }
+
+        if (config.method === 'form') {
+            const bodyFormData = new FormData();
+            for (let x in params) {
+                bodyFormData.append(x, params[x])
+            }
+            config.data = bodyFormData;
+            config.method = 'post';
+            config.headers["Content-Type"] = "multipart/form-data; boundary="+bodyFormData.getBoundary();
+        }
+
+
         return this._instance.request(config)
     }
 

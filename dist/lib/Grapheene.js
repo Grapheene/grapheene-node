@@ -4,11 +4,15 @@ exports.Grapheene = void 0;
 const AuthorizedRest_1 = require("./rest/AuthorizedRest");
 const Zokrates_1 = require("./zk/Zokrates");
 const KMF_1 = require("./kmf/KMF");
+const Storage_1 = require("./storage/Storage");
 const config = require('../../config.json');
 const sqlite = require('sqlite3').verbose();
 const fs = require('fs-extra');
 const path = require('path');
-const defaults = {};
+const defaults = {
+    medium: 'local',
+    dir: './'
+};
 class Grapheene {
     constructor(clientId, apiKey, opts) {
         this._options = Object.assign({}, defaults, opts);
@@ -35,6 +39,8 @@ class Grapheene {
             this.setupDb();
         });
         this.setupKMS();
+        this.setupStorage();
+        this._kmf.ring.storage = this._storage;
     }
     ensureDirExist() {
         fs.ensureDirSync(this.filesDir);
@@ -70,18 +76,11 @@ class Grapheene {
     setupKMS() {
         this.kmf = new KMF_1.KMF(this._restClient, this._db);
     }
+    setupStorage() {
+        this.storage = new Storage_1.Storage({ medium: this._options.medium }, this._restClient, this._kmf);
+    }
     set zk(zk) {
         this._zk = zk;
-    }
-    save(filePath, data) {
-        this.createDir(filePath);
-        fs.writeFileSync(filePath, data);
-    }
-    createDir(filePath) {
-        const seperator = path.sep;
-        let regEx = new RegExp(`(^${seperator}.+)(${seperator}.+$)`);
-        const match = filePath.match(regEx);
-        fs.ensureDirSync(match[1]);
     }
     get zk() {
         return this._zk;

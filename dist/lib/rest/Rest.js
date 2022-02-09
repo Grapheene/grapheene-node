@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const axios_1 = require("axios");
+const FormData = require('form-data');
 class Rest {
     constructor(base_url) {
         this._headers = {};
@@ -22,6 +23,9 @@ class Rest {
     put(endpoint, params) {
         return this._request(endpoint, 'PUT', params);
     }
+    multiPartForm(endpoint, params) {
+        return this._request(endpoint, 'FORM', params);
+    }
     del(endpoint) {
         return this._request(endpoint, 'DELETE');
     }
@@ -31,11 +35,21 @@ class Rest {
             headers: this._headers || null,
             method: method.toLowerCase()
         };
+        config.headers["Content-Type"] = 'application/json';
         if (config.method === 'get') {
             config.params = params;
         }
-        if (config.method !== 'get' && config.method !== 'del') {
+        if (config.method !== 'get' && config.method !== 'del' && config.method !== 'form') {
             config.data = params;
+        }
+        if (config.method === 'form') {
+            const bodyFormData = new FormData();
+            for (let x in params) {
+                bodyFormData.append(x, params[x]);
+            }
+            config.data = bodyFormData;
+            config.method = 'post';
+            config.headers["Content-Type"] = "multipart/form-data; boundary=" + bodyFormData.getBoundary();
         }
         return this._instance.request(config);
     }
