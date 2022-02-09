@@ -119,7 +119,7 @@ export default class Member {
     async decrypt(keyRingData: KeyRingData, encrypted?: string): Promise<{ keyRingData: KeyRingData, decrypted?: string }> {
         return new Promise(async (resolve, reject) => {
             if (this._mode === null) {
-                reject("encrypt must be used with file() or data()")
+                reject("decrypt must be used with file() or data()")
             }
             if (this._mode === 'data') {
                 if (!encrypted) {
