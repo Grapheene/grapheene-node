@@ -28,7 +28,6 @@ export class Zokrates {
 
     private setPaths(_storePath: string) {
         const os = process.platform;
-        console.log(os);
         const match = dir.match(/dist/);
         fs.ensureDirSync(_storePath);
         if (!match) {
@@ -36,7 +35,6 @@ export class Zokrates {
         }
         else {
             this._libRoot = dir.replace('dist', 'zokrates');
-            console.log(this._libRoot);
         }
         this._zokRoot = this._libRoot;
         if (os === 'darwin' || os === 'win32') {
@@ -53,7 +51,6 @@ export class Zokrates {
         else {
             this._execPath = this._execPath + path.sep+'zokrates ';
         }
-        fs.ensureDirSync(this._execPath);
         fs.ensureDirSync(this._libRoot);
         this._storePath = _storePath;
     }

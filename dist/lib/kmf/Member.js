@@ -105,7 +105,7 @@ class Member {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
                 if (this._mode === null) {
-                    reject("encrypt must be used with file() or data()");
+                    reject("decrypt must be used with file() or data()");
                 }
                 if (this._mode === 'data') {
                     if (!encrypted) {

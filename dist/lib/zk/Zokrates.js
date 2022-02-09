@@ -17,31 +17,30 @@ class Zokrates {
         this.computeWitness(fields[0], fields[1], fields[2], fields[3]);
     }
     setPaths(_storePath) {
-        const os = require('os');
+        const os = process.platform;
         const match = dir.match(/dist/);
         fs.ensureDirSync(_storePath);
         if (!match) {
-            this._libRoot = dir + '/zokrates';
+            this._libRoot = dir + path.sep + 'zokrates';
         }
         else {
             this._libRoot = dir.replace('dist', 'zokrates');
         }
         this._zokRoot = this._libRoot;
         if (os === 'darwin' || os === 'win32') {
-            this._execPath = this._libRoot + '/' + os;
+            this._execPath = this._libRoot + path.sep + os;
             this._libRoot = this._execPath;
         }
         else {
-            this._execPath = this._libRoot + '/linux';
+            this._execPath = this._libRoot + path.sep + 'linux';
             this._libRoot = this._execPath;
         }
         if (os === 'win32') {
-            this._execPath = this._execPath + '/zokrates.exe ';
+            this._execPath = this._execPath + path.sep + 'zokrates.exe ';
         }
         else {
-            this._execPath = this._execPath + '/zokrates ';
+            this._execPath = this._execPath + path.sep + 'zokrates ';
         }
-        fs.ensureDirSync(this._execPath);
         fs.ensureDirSync(this._libRoot);
         this._storePath = _storePath;
     }
@@ -62,16 +61,16 @@ class Zokrates {
         }
     }
     generateProof() {
-        const command = `${this._execPath} generate-proof --input=${this._storePath}/out --proving-key-path=${this._storePath}/proving.key --witness=${this._storePath}/witness --proof-path=${this._storePath}/proof.json`;
+        const command = `${this._execPath} generate-proof --input=${this._storePath}${path.sep}out --proving-key-path=${this._storePath}${path.sep}proving.key --witness=${this._storePath}${path.sep}witness --proof-path=${this._storePath}${path.sep}proof.json`;
         const compiled = this.run(command);
         if (!compiled.error) {
-            return fs.readJsonSync(`${this._storePath}/proof.json`);
+            return fs.readJsonSync(`${this._storePath}${path.sep}proof.json`);
         }
         console.log(compiled.error);
         return false;
     }
     computeWitness(field1, field2, field3, field4) {
-        const command = this._execPath + `compute-witness -a ${field1} ${field2} ${field3} ${field4} --input=${this._storePath}/out --output=${this._storePath}/witness`;
+        const command = this._execPath + `compute-witness -a ${field1} ${field2} ${field3} ${field4} --input=${this._storePath}${path.sep}out --output=${this._storePath}${path.sep}witness`;
         const computeWitness = this.run(command);
         if (!computeWitness.error) {
             return computeWitness.result;

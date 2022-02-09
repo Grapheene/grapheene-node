@@ -19,7 +19,8 @@ const path = require("path");
 let webcrypto, CryptoKeyInstance;
 if (typeof window === "undefined") {
     webcrypto = require('crypto').webcrypto;
-    CryptoKeyInstance = crypto.webcrypto.CryptoKey;
+    // @ts-ignore
+    CryptoKeyInstance = typeof crypto.webcrypto !== "undefined" ? crypto.webcrypto.CryptoKey : crypto.CryptoKey;
 }
 else {
     webcrypto = window.crypto;
