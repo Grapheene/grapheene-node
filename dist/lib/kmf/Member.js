@@ -42,6 +42,7 @@ class Member {
                 publicKey = yield this._keys[0].load('publicKey');
             }
             catch (e) {
+                console.log(e);
                 console.log("Unable to load member key " + this._keys[0].uuid);
                 throw new Error(e.message);
             }
@@ -75,19 +76,21 @@ class Member {
     encrypt(dataOrFilePath, name) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             if (this._mode === null) {
-                reject("encrypt must be used with file() or data()");
+                throw new Error("encrypt must be used with file() or data()");
             }
             if (this._mode === 'data') {
-                if (!name) {
-                    reject("name is required for data mode");
+                if (typeof name === "undefined") {
+                    throw new Error("name is required for data mode");
                 }
-                const keyRingData = {
-                    name: name,
-                    path: 'in:memory',
-                    encrypted: yield encryption.encrypt(dataOrFilePath, yield this.getKeys()),
-                    service: 'unsaved'
-                };
-                resolve(yield this._keyRing.addData(keyRingData));
+                else {
+                    const keyRingData = {
+                        name: name,
+                        path: 'in:memory',
+                        encrypted: yield encryption.encrypt(dataOrFilePath, yield this.getKeys()),
+                        service: 'unsaved'
+                    };
+                    resolve(yield this._keyRing.addData(keyRingData));
+                }
             }
             if (this._mode === 'file') {
                 const sp = dataOrFilePath.split(path.sep);

@@ -11,7 +11,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const Member_1 = require("./Member");
 const KeyRingData_1 = require("./KeyRingData");
-// TODO: connect ring data / storage
 // TODO: Hook into the dashboard API to pull program files
 // TODO: Add mongo db connector
 class KeyRing {

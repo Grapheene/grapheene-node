@@ -51,5 +51,13 @@
     "config.json"
   ],
   "main": "./dist",
-  "types": "./index.d.ts"
+  "types": "./index.d.ts",
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "engines": {
+    "node": ">=16"
+  }
 }
