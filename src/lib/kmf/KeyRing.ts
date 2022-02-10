@@ -5,7 +5,6 @@ import Rest from "../rest/Rest";
 import {Database} from "sqlite3";
 import {Storage} from "../storage/Storage";
 
-// TODO: connect ring data / storage
 // TODO: Hook into the dashboard API to pull program files
 // TODO: Add mongo db connector
 

@@ -50,6 +50,7 @@ export default class Member {
         try {
             publicKey = await this._keys[0].load('publicKey');
         } catch (e) {
+            console.log(e)
             console.log("Unable to load member key " + this._keys[0].uuid);
             throw new Error(e.message)
         }
@@ -87,19 +88,22 @@ export default class Member {
     encrypt(dataOrFilePath: any, name?: string): Promise<KeyRingData> {
         return new Promise(async (resolve, reject) => {
             if (this._mode === null) {
-                reject("encrypt must be used with file() or data()")
+                throw new Error("encrypt must be used with file() or data()")
             }
+
             if (this._mode === 'data') {
-                if (!name) {
-                    reject("name is required for data mode")
+                if (typeof name === "undefined") {
+                    throw new Error("name is required for data mode")
+                }else{
+                    const keyRingData: KeyRingDataRequest = {
+                        name: name,
+                        path: 'in:memory',
+                        encrypted: await encryption.encrypt(dataOrFilePath, await this.getKeys()),
+                        service: 'unsaved'
+                    }
+                    resolve(await this._keyRing.addData(keyRingData));
                 }
-                const keyRingData: KeyRingDataRequest = {
-                    name: name,
-                    path: 'in:memory',
-                    encrypted: await encryption.encrypt(dataOrFilePath, await this.getKeys()),
-                    service: 'unsaved'
-                }
-                resolve(await this._keyRing.addData(keyRingData));
+
             }
 
             if (this._mode === 'file') {
