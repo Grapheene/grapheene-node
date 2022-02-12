@@ -50,6 +50,7 @@
   "files": [
     "dist",
     "zokrates",
+    "prisma",
     "index.js",
     "index.d.ts",
     "config.json"
