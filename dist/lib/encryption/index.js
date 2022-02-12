@@ -70,7 +70,6 @@ const encryptFile = (filePath, keys) => {
             yield ecdh.importPublicKey(secrets.publicKey);
             let aesKey = yield ecdh.deriveKey(ecdh.publicKey);
             const encrypted = yield GCrypto.encryptFileStream(filePath, aesKey);
-            console.log(encrypted);
             resolve(true);
         }))
             .catch((e) => {

@@ -1,6 +1,5 @@
 const path = require('path');
 let dir = path.dirname(require.main.filename || process.mainModule.filename);
-
 /*
 Grapheene.kms.generate()
     .then((keys) => {
@@ -52,9 +51,14 @@ const Grapheene = new Grapheene({ClientID, OktaAPIKey, SDKKey})
 
  */
 // const Grapheene = require('./dist')('US34552ba2262d4dc0ac2268f82f4ede23', 'SK4d1286e70fe3408fa8c10430b293d946', 'OKTA-API-KEY');
+
+// Field level for an object
+/*
+// ENCRYPTION
+const TicketingSystem = new TicketingSystem();
 const Grapheene = require('./dist')('US34552ba2262d4dc0ac2268f82f4ede23', 'SK4d1286e70fe3408fa8c10430b293d946');
 
-Grapheene.kmf.ring.create('keyRingName')
+Grapheene.kmf.ring.create('keyRingName|DM_MESSAGE_ID')
     .then(async (ring) => {
         const sarmad = await ring.addMember({
             name: 'sarmad@grapheene.net'
@@ -64,20 +68,126 @@ Grapheene.kmf.ring.create('keyRingName')
         });
         console.log('Members created');
         // This looks up the master key in SQlite and returns then encrypts the data
-        const result = await sarmad.file().encrypt('/home/matt/WebstormProjects/grapheene/grapheene-node/somefolder/atextfile.txt');
-        await ring.storage.cloud().save(result)
-        /*
-        setTimeout(async () => {
-            await sarmad.file().decrypt(result);
-        }, 5000);
+        const ticket = TicketingSystem.helpTicket();
+        ticket.summary = 'Some new help ticket';
+        for (let x in ticket) {
+            ticket[x] = await sarmad.data().encrypt(ticket.summary, ticket.id + `_${x}`);
+            console.log(result);
+            /*
+            KeyRingData {
+                uuid: 'RD76252972266C474B8B22F2E74819890D',
+                name: '1234_summary',
+                path: 'in:memory',
+                service: 'unsaved'
+            }
 
-         */
+             */
+/*
+        }
+        TicketingSystem.helpTicket().save();
+
+    }).catch((e) => {
+    console.log(e.message);
+});
+/*
+// DECRYPTION
+const TicketingSystem = new TicketingSystem();
+const Grapheene = require('./dist')('US34552ba2262d4dc0ac2268f82f4ede23', 'SK4d1286e70fe3408fa8c10430b293d946');
+
+Grapheene.kmf.ring.create('keyRingName|DM_MESSAGE_ID')
+    .then(async (ring) => {
+        const member = await ring.addMember({
+            name: TicketingSystem.helpTicket().user()
+        });
+        // This looks up the master key in SQlite and returns then encrypts the data
+        const ticket = TicketingSystem.helpTicket();
+        ticket.summary = 'aslfhpakjfhaskjf;ghask;fjhasdk;fjhnask;dfn';
+        for (let x in ticket) {
+            ticket[x] = await member.data().decrypt(ticket.summary);
+
+        }
+        TicketingSystem.helpTicket().display();
 
     }).catch((e) => {
     console.log(e.message);
 });
 
-/*
+// Field level
+
+// ENCRYPTION / classic method for key rotation is very hard
+const Slack = new Slack();
+const Grapheene = require('./dist')('US34552ba2262d4dc0ac2268f82f4ede23', 'SK4d1286e70fe3408fa8c10430b293d946');
+
+// WHEN THE DM GROUP IS CREATED
+Grapheene.kmf.ring.create('DM_GROUP_ID+MESSAGE_ID')
+    .then(async (ring) => {
+        let members = [];
+        for (let i in Slack.members) {
+            members.push(await ring.addMember({
+                name: Slack.members[i].USER_ID
+            }));
+        }
+        console.log('Members created');
+    }).catch((e) => {
+    console.log(e.message);
+});
+
+// SEND MESSAGE
+Grapheene.kmf.ring.create('DM_GROUP_ID+MESSAGE_ID')
+    .then(async (ring) => {
+
+        Slack.message = 'Some new help ticket';
+        const member = ring.getMember(Slack.members[i].USER_ID);
+        Slack.message = await member.data().encrypt(DM_GROUP_ID+MESSAGE_ID + `_${Slack.message}`+'@@@@'+Slack.message, DM_GROUP_ID+MESSAGE_ID + `_${Slack.message}`);
+
+        Slack.message.send();
+
+    }).catch((e) => {
+    console.log(e.message);
+});
+
+// DECRYPTION Chrome Extenstion
+const Slack = new Slack();
+const Grapheene = require('./dist')('US34552ba2262d4dc0ac2268f82f4ede23', 'SK4d1286e70fe3408fa8c10430b293d946');
+
+Grapheene.kmf.ring.create('DM_GROUP_ID+MESSAGE_ID')
+    .then(async (ring) => {
+        const elements = DOM.find('.message_classic')
+        for(let x in elements){
+
+        }
+
+    }).catch((e) => {
+    console.log(e.message);
+});
+
+
+//GDPR ENDPOINT
+// DELETE host/gdpr/matt@grapheene.net
+
+// All the data that folks had access to
+const data: Array<rows> = 'SELECT ServiceName, DATA_NAME, DATA, USER FROM TABLE WHERE USER=matt@grapheene.net'
+
+// Everyone that had access to the data
+const user: Array<rows> = 'SELECT USER FROM TABLE WHERE USER=matt@grapheene.net'
+
+for(let x in data){
+    Grapheene.kmf.ring.create('ServiceName' | 'ServiceName_DATA_NAME')
+        .then(async (ring) => {
+                for(let i in ring.members){
+                    ring.delMember(ring.members[i])
+                }
+                -> ring.rotate()
+
+        }).catch((e) => {
+        console.log(e.message);
+    });
+}
+*/
+//process.env.DATABASE_URL='mongodb+srv://user:fR1mIhFLnYWXSxya@cluster0.vpyrv.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
+process.env.DATABASE_URL="postgresql://db_user:password@localhost:6432/keystore?schema=public"
+
+const Grapheene = require('./dist')('US34552ba2262d4dc0ac2268f82f4ede23', 'SK4d1286e70fe3408fa8c10430b293d946');
 Grapheene.kmf.ring.create('keyRingName')
     .then(async (ring) => {
         const sarmad = await ring.addMember({
@@ -88,16 +198,10 @@ Grapheene.kmf.ring.create('keyRingName')
         });
         console.log('Members created');
         // This looks up the master key in SQlite and returns then encrypts the data
-        const encrypted = await sarmad.data().encrypt('somedata');
+        const encrypted = await sarmad.file().encrypt('/home/matt/WebstormProjects/grapheene/grapheene-node/somefolder/atextfile.txt');
         console.log('Encrypted: ', encrypted);
         // This looks up the members public key in SQlite and returns then decrypts the data
-        await ring.storage.save(dir+'/somefolder', 'some.txt', encrypted);
-        const decrypted = await william.data().decrypt(encrypted);
-        ring.storage.list();
-        const file = ring.storage.find('some.txt');
-        console.log(file);
-        await ring.storage.delete(file)
-        console.log('Decrypted: ', decrypted);
+        await ring.storage.cloud().save(encrypted);
 
         setTimeout(async () => {
             await ring.delMember('sarmad@grapheene.net');
@@ -108,7 +212,7 @@ Grapheene.kmf.ring.create('keyRingName')
     console.log(e.message);
 });
 
-
+/*
 
 const Grapheene = require('./dist')('US34552ba2262d4dc0ac2268f82f4ede23', 'SK4d1286e70fe3408fa8c10430b293d946');
 Grapheene.kmf.ring.create('keyRingName')

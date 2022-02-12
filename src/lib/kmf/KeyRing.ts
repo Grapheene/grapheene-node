@@ -4,6 +4,7 @@ import {KeyData, KeyRingDataOptions, KeyRingDataRequest, KeyRingOptions, MemberO
 import Rest from "../rest/Rest";
 import {Database} from "sqlite3";
 import {Storage} from "../storage/Storage";
+import {PrismaClient} from "@prisma/client";
 
 // TODO: Hook into the dashboard API to pull program files
 // TODO: Add mongo db connector
@@ -19,9 +20,9 @@ export default class KeyRing {
     private _master: Member;
     private _storage: Storage;
     private readonly _restClient: Rest;
-    private readonly _db: Database;
+    private readonly _db: Database | PrismaClient;
 
-    constructor(restClient: Rest, DB: Database, options?: KeyRingOptions) {
+    constructor(restClient: Rest, DB: Database | PrismaClient, options?: KeyRingOptions) {
         if (options) {
             this.setOptions(options)
         }

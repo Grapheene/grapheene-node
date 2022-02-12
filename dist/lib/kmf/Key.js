@@ -1,5 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+const sqlite3_1 = require("sqlite3");
+const client_1 = require("@prisma/client");
 class Key {
     constructor(options, DB) {
         this.uuid = options.uuid;
@@ -13,45 +15,88 @@ class Key {
     }
     save(uuid, active, keyData) {
         const isActive = active ? 1 : 0;
-        this._db.get(`SELECT *
-                      FROM keystore
-                      WHERE uuid = '${uuid}'`, (err, row) => {
-            if (err) {
-                console.log(err);
-            }
-            if (!row) {
-                this._db.run('INSERT INTO keystore VALUES (?, ?, ?)', [uuid, isActive, JSON.stringify(keyData)]);
-            }
-        });
+        if (this._db instanceof sqlite3_1.Database) {
+            this._db.get(`SELECT *
+                          FROM keystore
+                          WHERE uuid = '${uuid}'`, (err, row) => {
+                if (err) {
+                    console.log(err);
+                }
+                if (!row) {
+                    if (this._db instanceof sqlite3_1.Database) {
+                        this._db.run('INSERT INTO keystore VALUES (?, ?, ?)', [uuid, isActive, JSON.stringify(keyData)]);
+                    }
+                }
+            });
+        }
+        if (this._db instanceof client_1.PrismaClient) {
+            this._db.keyStore.create({
+                data: {
+                    uuid: uuid,
+                    active: isActive === 1,
+                    data: JSON.stringify(keyData)
+                }
+            }).then(() => {
+                console.log('Key Saved in DB');
+            }).catch(console.log);
+        }
     }
     load(type) {
         return new Promise((resolve, reject) => {
             let key;
-            this._db.get(`SELECT *
-                          FROM keystore
-                          WHERE uuid = '${this.uuid}'`, (err, row) => {
-                if (row) {
+            if (this._db instanceof sqlite3_1.Database) {
+                this._db.get(`SELECT *
+                              FROM keystore
+                              WHERE uuid = '${this.uuid}'`, (err, row) => {
+                    if (row) {
+                        key = JSON.parse(row.data);
+                        resolve(key[type]);
+                    }
+                    else {
+                        reject('No key data found for ' + this.uuid);
+                    }
+                });
+            }
+            if (this._db instanceof client_1.PrismaClient) {
+                this._db.keyStore.findUnique({
+                    where: {
+                        uuid: this.uuid
+                    }
+                }).then((row) => {
                     key = JSON.parse(row.data);
                     resolve(key[type]);
-                }
-                else {
+                    resolve(this.uuid);
+                }).catch(() => {
                     reject('No key data found for ' + this.uuid);
-                }
-            });
+                });
+            }
         });
     }
     destroy() {
         return new Promise((resolve, reject) => {
-            this._db.run(`DELETE
-                          FROM keystore
-                          WHERE uuid = ?`, [this.uuid], (err, row) => {
-                if (err) {
-                    reject('No key data found for ' + this.uuid);
-                }
-                else {
+            if (this._db instanceof sqlite3_1.Database) {
+                this._db.run(`DELETE
+                              FROM keystore
+                              WHERE uuid = ?`, [this.uuid], (err, row) => {
+                    if (err) {
+                        reject('No key data found for ' + this.uuid);
+                    }
+                    else {
+                        resolve(this.uuid);
+                    }
+                });
+            }
+            if (this._db instanceof client_1.PrismaClient) {
+                this._db.keyStore.delete({
+                    where: {
+                        uuid: this.uuid
+                    }
+                }).then(() => {
                     resolve(this.uuid);
-                }
-            });
+                }).catch(() => {
+                    reject('No key data found for ' + this.uuid);
+                });
+            }
         });
     }
 }

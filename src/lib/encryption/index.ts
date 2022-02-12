@@ -70,7 +70,6 @@ export const encryptFile = (filePath: string, keys: KeyData): Promise<any> => {
                 let aesKey = await ecdh.deriveKey(ecdh.publicKey)
 
                 const encrypted = await GCrypto.encryptFileStream(filePath, aesKey)
-                console.log(encrypted)
                 resolve(true)
 
             })

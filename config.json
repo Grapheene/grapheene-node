@@ -1,3 +1,3 @@
 {
-  "baseUrl": "http://grapheene-encrytion-platform-1208313813.us-west-2.elb.amazonaws.com/"
+  "baseUrl": "http://localhost:3001"
 }

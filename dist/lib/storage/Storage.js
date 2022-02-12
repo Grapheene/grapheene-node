@@ -36,12 +36,10 @@ class Storage {
         return null;
     }
     list() {
-        console.log(this._kmf.ring.data);
         return this._kmf.ring.data;
     }
     save(keyRingData, options) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log(keyRingData);
             if (typeof options !== 'undefined' && options.name) {
                 keyRingData.name = options.name;
             }

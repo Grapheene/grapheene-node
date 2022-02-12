@@ -4,13 +4,14 @@ import {Database} from "sqlite3";
 import * as encryption from "../encryption";
 import KeyRing from "./KeyRing";
 import KeyRingData from "./KeyRingData";
+import {PrismaClient} from "@prisma/client";
 
 const path = require("path")
 
 export default class Member {
 
     private readonly uniqueName: string;
-    private readonly _db: Database;
+    private readonly _db: Database | PrismaClient;
     private readonly _master: Member;
     private readonly _keys: Array<Key> = [];
     private _mode: null | 'file' | 'data' | 'stream' = null;
@@ -23,7 +24,7 @@ export default class Member {
     name: string;
 
 
-    constructor(options: MemberOptions, DB: Database, keyRing: KeyRing, master?: Member) {
+    constructor(options: MemberOptions, DB: Database | PrismaClient, keyRing: KeyRing, master?: Member) {
         this.uuid = options.uuid;
         this.name = options.name;
         this._keyRing = keyRing;

@@ -40,12 +40,10 @@ export class Storage {
     }
 
     list() {
-        console.log(this._kmf.ring.data)
         return this._kmf.ring.data;
     }
 
     async save(keyRingData: KeyRingData, options?:{path?: string, name?: string}) {
-        console.log(keyRingData)
         if(typeof options !== 'undefined' && options.name){
             keyRingData.name = options.name;
         }

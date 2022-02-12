@@ -25,6 +25,8 @@
   },
   "homepage": "https://github.com/Grapheene/grapheene-node#readme",
   "dependencies": {
+    "@prisma/client": "^3.8.1",
+    "@prisma/migrate": "^3.9.2",
     "atob": "^2.1.2",
     "axios": "^0.24.0",
     "btoa": "^1.2.1",
@@ -32,6 +34,8 @@
     "form-data": "^4.0.0",
     "fs-extra": "^10.0.0",
     "jsonwebtoken": "^8.5.1",
+    "node_modules-path": "^2.0.5",
+    "prisma": "^3.9.2",
     "sqlite3": "^5.0.2",
     "tsify": "^5.0.4"
   },
