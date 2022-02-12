@@ -14,7 +14,10 @@ const fs = require('fs-extra');
 const path = require('path');
 const defaults = {
     medium: 'local',
-    dir: './'
+    dir: './',
+    db:{
+        migrate: false
+    }
 }
 
 if(fs.existsSync(node_modules() + '/.prisma/client/package.json')){
@@ -136,14 +139,16 @@ export class Grapheene {
             }
 
             if (process.env.DATABASE_URL.match(/^post/)) {
+                fs.copyFileSync(this.prismaDir + '/schemas/postgres.prisma', this.prismaDir + '/schema.prisma');
+                this.run('prisma generate --schema ' + this.prismaDir + '/schema.prisma');
+                if (!fs.existsSync(this.prismaDir + '/migrations')) {
+                    console.log(this._options)
+                    if(this._options.db.migrate){
+                        this.run('prisma migrate dev --name init --schema ' + this.prismaDir + '/schema.prisma');
+                        this.run('prisma migrate deploy --schema ' + this.prismaDir + '/schema.prisma');
+                    }
 
-                fs.copyFileSync(this.prismaDir + '/schemas/postgres.prisma', this.prismaDir + '/schema.prisma')
-                this.run('prisma generate')
-                if(!fs.existsSync(this.prismaDir + '/migrations')){
-                    this.run('prisma migrate dev --name init --schema ' + this.prismaDir + '/schema.prisma', true)
-                    this.run('prisma migrate deploy --schema ' + this.prismaDir + '/schema.prisma', true)
                 }
-
             }
 
 
