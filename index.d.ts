@@ -7,6 +7,7 @@ import Key from "./src/lib/kmf/Key";
 export interface GrapheeneOptions {
     medium?: 'cloud' | 'local';
     dir?: string;
+    db?: {migrate: boolean}
 }
 
 export interface TokenManagerOptions {
