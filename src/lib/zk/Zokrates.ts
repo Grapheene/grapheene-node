@@ -31,36 +31,56 @@ export class Zokrates {
         this._token = token;
 
         this.setPaths(options.path)
-        this.getZkFiles();
-        const fields = this.getZkFields();
-        this.computeWitness(fields[0], fields[1], fields[2], fields[3]);
+
+
+    }
+    async setup(){
+        if (!this.filesExist()) {
+            await this.getZkFiles(() => {
+                const fields = this.getZkFields();
+                this.computeWitness(fields[0], fields[1], fields[2], fields[3]);
+            })
+        }
     }
 
-    private getZkFiles() {
-        const finishedDownload = promisify(stream.finished);
-        this._rest.get(`/clientIds/${this._clientId}/download?token=${this._token}`).then((result: any) => {
-            const outEndPoint = result.data.data[0].sdk;
-            const proovingPoint = result.data.data[0].proof;
-            const client = new Rest('https://client-files-store.s3.amazonaws.com');
-            axios({
-                method: 'GET',
-                url: outEndPoint,
-                responseType: 'stream',
-            }).then(async (r: any) => {
-                const writer = fs.createWriteStream(`${this._storePath}${path.sep}out`);
-                r.data.pipe(writer)
-                await finishedDownload(writer);
+    filesExist() {
+        if (fs.existsSync(`${this._storePath}${path.sep}out`) && `${this._storePath}${path.sep}proving.key`) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private getZkFiles(callback: Function) {
+
+        return new Promise(async (resolve, reject) => {
+            console.log('DL Files')
+            const finishedDownload = promisify(stream.finished);
+            await this._rest.get(`/clientIds/${this._clientId}/download?token=${this._token}`).then(async (result)=>{
+                const outEndPoint = result.data.data[0].sdk;
+                const proovingPoint = result.data.data[0].proof;
+                const out = await axios({
+                    method: 'GET',
+                    url: outEndPoint,
+                    responseType: 'stream',
+                })
+                const outwriter = fs.createWriteStream(`${this._storePath}${path.sep}out`);
+                out.data.pipe(outwriter)
+                await finishedDownload(outwriter);
+                const prooving = await axios({
+                    method: 'GET',
+                    url: proovingPoint,
+                    responseType: 'stream',
+                })
+                const proovingwriter = fs.createWriteStream(`${this._storePath}${path.sep}proving.key`);
+                prooving.data.pipe(proovingwriter)
+                await finishedDownload(proovingwriter);
+                callback();
+                resolve(true)
             })
-            axios({
-                method: 'GET',
-                url: proovingPoint,
-                responseType: 'stream',
-            }).then(async (r: any) => {
-                const writer = fs.createWriteStream(`${this._storePath}${path.sep}proving.key`);
-                r.data.pipe(writer)
-                await finishedDownload(writer);
-            })
-        }).catch(console.log)
+
+        })
+
     }
 
     private setPaths(_storePath: string) {

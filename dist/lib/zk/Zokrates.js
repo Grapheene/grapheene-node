@@ -32,7 +32,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Zokrates = void 0;
-const Rest_1 = __importDefault(require("../rest/Rest"));
 const axios_1 = __importDefault(require("axios"));
 const util_1 = require("util");
 const stream = __importStar(require("stream"));
@@ -50,35 +49,52 @@ class Zokrates {
         this._clientId = clientId;
         this._token = token;
         this.setPaths(options.path);
-        this.getZkFiles();
-        const fields = this.getZkFields();
-        this.computeWitness(fields[0], fields[1], fields[2], fields[3]);
     }
-    getZkFiles() {
-        const finishedDownload = (0, util_1.promisify)(stream.finished);
-        this._rest.get(`/clientIds/${this._clientId}/download?token=${this._token}`).then((result) => {
-            const outEndPoint = result.data.data[0].sdk;
-            const proovingPoint = result.data.data[0].proof;
-            const client = new Rest_1.default('https://client-files-store.s3.amazonaws.com');
-            (0, axios_1.default)({
-                method: 'GET',
-                url: outEndPoint,
-                responseType: 'stream',
-            }).then((r) => __awaiter(this, void 0, void 0, function* () {
-                const writer = fs.createWriteStream(`${this._storePath}${path.sep}out`);
-                r.data.pipe(writer);
-                yield finishedDownload(writer);
+    setup() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this.filesExist()) {
+                yield this.getZkFiles(() => {
+                    const fields = this.getZkFields();
+                    this.computeWitness(fields[0], fields[1], fields[2], fields[3]);
+                });
+            }
+        });
+    }
+    filesExist() {
+        if (fs.existsSync(`${this._storePath}${path.sep}out`) && `${this._storePath}${path.sep}proving.key`) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    getZkFiles(callback) {
+        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            console.log('DL Files');
+            const finishedDownload = (0, util_1.promisify)(stream.finished);
+            yield this._rest.get(`/clientIds/${this._clientId}/download?token=${this._token}`).then((result) => __awaiter(this, void 0, void 0, function* () {
+                const outEndPoint = result.data.data[0].sdk;
+                const proovingPoint = result.data.data[0].proof;
+                const out = yield (0, axios_1.default)({
+                    method: 'GET',
+                    url: outEndPoint,
+                    responseType: 'stream',
+                });
+                const outwriter = fs.createWriteStream(`${this._storePath}${path.sep}out`);
+                out.data.pipe(outwriter);
+                yield finishedDownload(outwriter);
+                const prooving = yield (0, axios_1.default)({
+                    method: 'GET',
+                    url: proovingPoint,
+                    responseType: 'stream',
+                });
+                const proovingwriter = fs.createWriteStream(`${this._storePath}${path.sep}proving.key`);
+                prooving.data.pipe(proovingwriter);
+                yield finishedDownload(proovingwriter);
+                callback();
+                resolve(true);
             }));
-            (0, axios_1.default)({
-                method: 'GET',
-                url: proovingPoint,
-                responseType: 'stream',
-            }).then((r) => __awaiter(this, void 0, void 0, function* () {
-                const writer = fs.createWriteStream(`${this._storePath}${path.sep}proving.key`);
-                r.data.pipe(writer);
-                yield finishedDownload(writer);
-            }));
-        }).catch(console.log);
+        }));
     }
     setPaths(_storePath) {
         const os = process.platform;

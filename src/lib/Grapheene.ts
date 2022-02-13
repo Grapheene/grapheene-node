@@ -40,7 +40,7 @@ export class Grapheene {
     private readonly dbDir: string;
     private readonly authDir: string;
     private readonly prismaDir: string;
-    private readonly _restClient: AuthorizedRest;
+    private _restClient: AuthorizedRest;
 
     private _db: any;
     private _options: GrapheeneOptions;
@@ -70,7 +70,23 @@ export class Grapheene {
         this.authDir = this.filesDir + path.sep + 'auth';
 
         this.ensureDirExist()
-        this.setupZK()
+    }
+
+    private ensureDirExist() {
+        fs.ensureDirSync(this.filesDir)
+        fs.ensureDirSync(this.zkDir)
+        fs.ensureDirSync(this.cryptoDir)
+        fs.ensureDirSync(this.dbDir)
+        fs.ensureDirSync(this.authDir)
+    }
+
+    async setup() {
+
+        this.zk = new Zokrates(this.clientId, this.apiKey, this.token, {
+            path: this.zkDir,
+            rest: new Rest(config.baseUrl)
+        });
+        await this.zk.setup();
         this._restClient = new AuthorizedRest(config.baseUrl, this.clientId, this.zk, this.authDir);
         if (process.env.DATABASE_URL) {
             this.setupDb()
@@ -86,23 +102,9 @@ export class Grapheene {
         this.setupKMS()
         this.setupStorage()
         this._kmf.ring.storage = this._storage;
-    }
-
-    private ensureDirExist() {
-        fs.ensureDirSync(this.filesDir)
-        fs.ensureDirSync(this.zkDir)
-        fs.ensureDirSync(this.cryptoDir)
-        fs.ensureDirSync(this.dbDir)
-        fs.ensureDirSync(this.authDir)
-    }
-
-    private setupZK() {
-        this.zk = new Zokrates(this.clientId, this.apiKey, this.token, {
-            path: this.zkDir,
-            rest: new Rest(config.baseUrl)
-        });
 
     }
+
 
     private setupDevDb() {
         let tables: Array<string> = []
@@ -146,7 +148,7 @@ export class Grapheene {
                 fs.copyFileSync(this.prismaDir + '/schemas/postgres.prisma', this.prismaDir + '/schema.prisma');
                 this.run('prisma generate --schema ' + this.prismaDir + '/schema.prisma');
                 if (!fs.existsSync(this.prismaDir + '/migrations')) {
-                    console.log(this._options)
+                    //console.log(this._options)
                     if (this._options.db.migrate) {
                         this.run('prisma migrate dev --name init --schema ' + this.prismaDir + '/schema.prisma');
                         this.run('prisma migrate deploy --schema ' + this.prismaDir + '/schema.prisma');

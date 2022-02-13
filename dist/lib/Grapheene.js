@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -48,22 +57,6 @@ class Grapheene {
         this.dbDir = this.filesDir + path.sep + 'db';
         this.authDir = this.filesDir + path.sep + 'auth';
         this.ensureDirExist();
-        this.setupZK();
-        this._restClient = new AuthorizedRest_1.default(config.baseUrl, this.clientId, this.zk, this.authDir);
-        if (process.env.DATABASE_URL) {
-            this.setupDb();
-        }
-        else {
-            this._db = new sqlite.Database(this.dbDir + path.sep + 'grapheene.db', (err) => {
-                if (err) {
-                    throw new Error(err.message);
-                }
-                this.setupDevDb();
-            });
-        }
-        this.setupKMS();
-        this.setupStorage();
-        this._kmf.ring.storage = this._storage;
     }
     ensureDirExist() {
         fs.ensureDirSync(this.filesDir);
@@ -72,10 +65,28 @@ class Grapheene {
         fs.ensureDirSync(this.dbDir);
         fs.ensureDirSync(this.authDir);
     }
-    setupZK() {
-        this.zk = new Zokrates_1.Zokrates(this.clientId, this.apiKey, this.token, {
-            path: this.zkDir,
-            rest: new Rest_1.default(config.baseUrl)
+    setup() {
+        return __awaiter(this, void 0, void 0, function* () {
+            this.zk = new Zokrates_1.Zokrates(this.clientId, this.apiKey, this.token, {
+                path: this.zkDir,
+                rest: new Rest_1.default(config.baseUrl)
+            });
+            yield this.zk.setup();
+            this._restClient = new AuthorizedRest_1.default(config.baseUrl, this.clientId, this.zk, this.authDir);
+            if (process.env.DATABASE_URL) {
+                this.setupDb();
+            }
+            else {
+                this._db = new sqlite.Database(this.dbDir + path.sep + 'grapheene.db', (err) => {
+                    if (err) {
+                        throw new Error(err.message);
+                    }
+                    this.setupDevDb();
+                });
+            }
+            this.setupKMS();
+            this.setupStorage();
+            this._kmf.ring.storage = this._storage;
         });
     }
     setupDevDb() {
@@ -116,7 +127,7 @@ class Grapheene {
                 fs.copyFileSync(this.prismaDir + '/schemas/postgres.prisma', this.prismaDir + '/schema.prisma');
                 this.run('prisma generate --schema ' + this.prismaDir + '/schema.prisma');
                 if (!fs.existsSync(this.prismaDir + '/migrations')) {
-                    console.log(this._options);
+                    //console.log(this._options)
                     if (this._options.db.migrate) {
                         this.run('prisma migrate dev --name init --schema ' + this.prismaDir + '/schema.prisma');
                         this.run('prisma migrate deploy --schema ' + this.prismaDir + '/schema.prisma');

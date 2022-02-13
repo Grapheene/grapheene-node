@@ -188,29 +188,33 @@ for(let x in data){
 process.env.DATABASE_URL = 'postgresql://db_user:password@localhost:6432/keystore?schema=public';
 
 const Grapheene = require('./dist')('US34552ba2262d4dc0ac2268f82f4ede23', 'SK4d1286e70fe3408fa8c10430b293d946', '00gghez10JQKJejq3696', { db: { migrate: false } });
-Grapheene.kmf.ring.create('keyRingName')
-    .then(async (ring) => {
-        const sarmad = await ring.addMember({
-            name: 'sarmad@grapheene.net'
-        });
-        const william = await ring.addMember({
-            name: 'william@grapheene.net'
-        });
-        console.log('Members created');
-        // This looks up the master key in SQlite and returns then encrypts the data
-        const encrypted = await sarmad.file().encrypt('/home/matt/WebstormProjects/grapheene/grapheene-node/somefolder/atextfile.txt');
-        console.log('Encrypted: ', encrypted);
-        // This looks up the members public key in SQlite and returns then decrypts the data
-        await ring.storage.cloud().save(encrypted);
+Grapheene.setup()
+    .then(()=>{
+        Grapheene.kmf.ring.create('keyRingName')
+            .then(async (ring) => {
+                const sarmad = await ring.addMember({
+                    name: 'sarmad@grapheene.net'
+                });
+                const william = await ring.addMember({
+                    name: 'william@grapheene.net'
+                });
+                console.log('Members created');
+                // This looks up the master key in SQlite and returns then encrypts the data
+                const encrypted = await sarmad.file().encrypt('/home/matt/WebstormProjects/grapheene/grapheene-node/somefolder/atextfile.txt');
+                console.log('Encrypted: ', encrypted);
+                // This looks up the members public key in SQlite and returns then decrypts the data
+                await ring.storage.cloud().save(encrypted);
 
-        setTimeout(async () => {
-            await ring.delMember('sarmad@grapheene.net');
-            console.log('Deleted \'sarmad@grapheene.net\'');
-            await ring.delMember('william@grapheene.net');
-        }, 10000);
-    }).catch((e) => {
-    console.log(e.message);
-});
+                setTimeout(async () => {
+                    await ring.delMember('sarmad@grapheene.net');
+                    console.log('Deleted \'sarmad@grapheene.net\'');
+                    await ring.delMember('william@grapheene.net');
+                }, 10000);
+            }).catch((e) => {
+            console.log(e.message);
+        });
+    })
+
 
 /*
 
