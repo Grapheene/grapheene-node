@@ -8,10 +8,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TokenManager = void 0;
-const EventFactory_1 = require("./EventFactory");
-const Rest_1 = require("./rest/Rest");
+const EventFactory_1 = __importDefault(require("./EventFactory"));
+const Rest_1 = __importDefault(require("./rest/Rest"));
 const config = require('../../config.json');
 const jwt = require('jsonwebtoken');
 const fs = require('fs-extra');

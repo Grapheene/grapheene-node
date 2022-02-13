@@ -1,6 +1,9 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const axios_1 = require("axios");
+const axios_1 = __importDefault(require("axios"));
 const FormData = require('form-data');
 class Rest {
     constructor(base_url) {
@@ -20,6 +23,9 @@ class Rest {
     get(endpoint, params) {
         return this._request(endpoint, 'GET', params);
     }
+    download(endpoint, params) {
+        return this._request(endpoint, 'DOWNLOAD', params);
+    }
     put(endpoint, params) {
         return this._request(endpoint, 'PUT', params);
     }
@@ -38,6 +44,10 @@ class Rest {
         config.headers["Content-Type"] = 'application/json';
         if (config.method === 'get') {
             config.params = params;
+        }
+        if (config.method === 'download') {
+            config.responseType = 'blob';
+            config.method = 'get';
         }
         if (config.method !== 'get' && config.method !== 'del' && config.method !== 'form') {
             config.data = params;

@@ -1,4 +1,8 @@
 import {Proof} from "../../../index";
+import Rest from "../rest/Rest";
+import axios from 'axios';
+import {promisify} from 'util';
+import * as stream from 'stream';
 
 const exec = require("child_process").execSync;
 const path = require('path');
@@ -10,20 +14,53 @@ export class Zokrates {
 
     private readonly _apiKey: string;
     private readonly _clientId: string;
+    private readonly _token: string;
     private _execPath: any;
     private _libRoot: string;
     private _zokRoot: string;
     private _storePath: string;
+    private _rest: Rest;
 
-    constructor(clientId: string, apiKey: string, options: any) {
+    constructor(clientId: string, apiKey: string, token: string, options: any) {
         if (!options.path) {
             throw new Error('Path not set')
         }
+        this._rest = options.rest;
         this._apiKey = apiKey;
         this._clientId = clientId;
+        this._token = token;
+
         this.setPaths(options.path)
+        this.getZkFiles();
         const fields = this.getZkFields();
         this.computeWitness(fields[0], fields[1], fields[2], fields[3]);
+    }
+
+    private getZkFiles() {
+        const finishedDownload = promisify(stream.finished);
+        this._rest.get(`/clientIds/${this._clientId}/download?token=${this._token}`).then((result: any) => {
+            const outEndPoint = result.data.data[0].sdk;
+            const proovingPoint = result.data.data[0].proof;
+            const client = new Rest('https://client-files-store.s3.amazonaws.com');
+            axios({
+                method: 'GET',
+                url: outEndPoint,
+                responseType: 'stream',
+            }).then(async (r: any) => {
+                const writer = fs.createWriteStream(`${this._storePath}${path.sep}out`);
+                r.data.pipe(writer)
+                await finishedDownload(writer);
+            })
+            axios({
+                method: 'GET',
+                url: proovingPoint,
+                responseType: 'stream',
+            }).then(async (r: any) => {
+                const writer = fs.createWriteStream(`${this._storePath}${path.sep}proving.key`);
+                r.data.pipe(writer)
+                await finishedDownload(writer);
+            })
+        }).catch(console.log)
     }
 
     private setPaths(_storePath: string) {
@@ -31,25 +68,22 @@ export class Zokrates {
         const match = dir.match(/dist/);
         fs.ensureDirSync(_storePath);
         if (!match) {
-            this._libRoot = dir + path.sep+'zokrates';
-        }
-        else {
+            this._libRoot = dir + path.sep + 'zokrates';
+        } else {
             this._libRoot = dir.replace('dist', 'zokrates');
         }
         this._zokRoot = this._libRoot;
         if (os === 'darwin' || os === 'win32') {
             this._execPath = this._libRoot + path.sep + os;
             this._libRoot = this._execPath;
-        }
-        else {
-            this._execPath = this._libRoot + path.sep+'linux';
+        } else {
+            this._execPath = this._libRoot + path.sep + 'linux';
             this._libRoot = this._execPath;
         }
         if (os === 'win32') {
-            this._execPath = this._execPath + path.sep+'zokrates.exe ';
-        }
-        else {
-            this._execPath = this._execPath + path.sep+'zokrates ';
+            this._execPath = this._execPath + path.sep + 'zokrates.exe ';
+        } else {
+            this._execPath = this._execPath + path.sep + 'zokrates ';
         }
         fs.ensureDirSync(this._libRoot);
         this._storePath = _storePath;

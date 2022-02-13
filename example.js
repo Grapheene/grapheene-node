@@ -185,9 +185,9 @@ for(let x in data){
 }
 */
 //process.env.DATABASE_URL='mongodb+srv://user:fR1mIhFLnYWXSxya@cluster0.vpyrv.mongodb.net/myFirstDatabase?retryWrites=true&w=majority'
-process.env.DATABASE_URL="postgresql://db_user:password@localhost:6432/keystore?schema=public"
+process.env.DATABASE_URL = 'postgresql://db_user:password@localhost:6432/keystore?schema=public';
 
-const Grapheene = require('./dist')('US34552ba2262d4dc0ac2268f82f4ede23', 'SK4d1286e70fe3408fa8c10430b293d946');
+const Grapheene = require('./dist')('US34552ba2262d4dc0ac2268f82f4ede23', 'SK4d1286e70fe3408fa8c10430b293d946', '00gghez10JQKJejq3696', { db: { migrate: false } });
 Grapheene.kmf.ring.create('keyRingName')
     .then(async (ring) => {
         const sarmad = await ring.addMember({

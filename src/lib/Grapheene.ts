@@ -5,6 +5,7 @@ import {Database} from "sqlite3";
 import {Storage} from "./storage/Storage";
 import {GrapheeneOptions} from "../../index";
 import {execSync as exec, spawnSync as spawn} from "child_process";
+import Rest from "./rest/Rest";
 
 const config = require('../../config.json')
 const sqlite = require('sqlite3').verbose();
@@ -15,24 +16,24 @@ const path = require('path');
 const defaults = {
     medium: 'local',
     dir: './',
-    db:{
+    db: {
         migrate: false
     }
 }
 
-if(fs.existsSync(node_modules() + '/.prisma/client/package.json')){
+if (fs.existsSync(node_modules() + '/.prisma/client/package.json')) {
     fs.unlinkSync(node_modules() + '/.prisma/client/package.json')
 }
-if(fs.existsSync(node_modules() + '/.prisma/client/schema.prisma')){
+if (fs.existsSync(node_modules() + '/.prisma/client/schema.prisma')) {
     fs.unlinkSync(node_modules() + '/.prisma/client/schema.prisma')
 }
-
 
 
 export class Grapheene {
 
     private readonly clientId: string;
     private readonly apiKey: string;
+    private readonly token: string;
     private readonly filesDir: string;
     private readonly zkDir: string;
     private readonly cryptoDir: string;
@@ -47,11 +48,11 @@ export class Grapheene {
     private _zk: Zokrates;
     private _storage: any;
 
-    constructor(clientId: string, apiKey: string, opts?: GrapheeneOptions) {
+    constructor(clientId: string, apiKey: string, token: string, opts?: GrapheeneOptions) {
         this._options = Object.assign({}, defaults, opts);
         this.apiKey = apiKey;
         this.clientId = clientId;
-
+        this.token = token;
 
         this.filesDir = path.dirname(__dirname) + path.sep + 'files'
         this.prismaDir = path.dirname(__dirname).replace(/(dist.*)/, 'prisma')
@@ -96,7 +97,10 @@ export class Grapheene {
     }
 
     private setupZK() {
-        this.zk = new Zokrates(this.clientId, this.apiKey, {path: this.zkDir});
+        this.zk = new Zokrates(this.clientId, this.apiKey, this.token, {
+            path: this.zkDir,
+            rest: new Rest(config.baseUrl)
+        });
 
     }
 
@@ -127,7 +131,7 @@ export class Grapheene {
     }
 
     private setupDb() {
-        if(fs.existsSync(this.prismaDir + '/schema.prisma')){
+        if (fs.existsSync(this.prismaDir + '/schema.prisma')) {
             fs.unlinkSync(this.prismaDir + '/schema.prisma')
         }
 
@@ -143,7 +147,7 @@ export class Grapheene {
                 this.run('prisma generate --schema ' + this.prismaDir + '/schema.prisma');
                 if (!fs.existsSync(this.prismaDir + '/migrations')) {
                     console.log(this._options)
-                    if(this._options.db.migrate){
+                    if (this._options.db.migrate) {
                         this.run('prisma migrate dev --name init --schema ' + this.prismaDir + '/schema.prisma');
                         this.run('prisma migrate deploy --schema ' + this.prismaDir + '/schema.prisma');
                     }
@@ -152,12 +156,11 @@ export class Grapheene {
             }
 
 
-
         }
-        while(!fs.existsSync(node_modules() + '/.prisma/client/schema.prisma')){
+        while (!fs.existsSync(node_modules() + '/.prisma/client/schema.prisma')) {
             console.log('Setting Up DB')
         }
-        const { PrismaClient } = require('@prisma/client');
+        const {PrismaClient} = require('@prisma/client');
 
         this._db = new PrismaClient()
 
@@ -165,9 +168,9 @@ export class Grapheene {
 
     private run(command: string, interactive?: boolean) {
         let buff;
-        if(!interactive){
+        if (!interactive) {
             buff = exec(command);
-        }else{
+        } else {
             buff = spawn(command);
         }
 

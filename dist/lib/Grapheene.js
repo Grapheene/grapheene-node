@@ -1,12 +1,16 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Grapheene = void 0;
-const AuthorizedRest_1 = require("./rest/AuthorizedRest");
+const AuthorizedRest_1 = __importDefault(require("./rest/AuthorizedRest"));
 const Zokrates_1 = require("./zk/Zokrates");
 const KMF_1 = require("./kmf/KMF");
 const sqlite3_1 = require("sqlite3");
 const Storage_1 = require("./storage/Storage");
 const child_process_1 = require("child_process");
+const Rest_1 = __importDefault(require("./rest/Rest"));
 const config = require('../../config.json');
 const sqlite = require('sqlite3').verbose();
 const node_modules = require('node_modules-path');
@@ -26,10 +30,11 @@ if (fs.existsSync(node_modules() + '/.prisma/client/schema.prisma')) {
     fs.unlinkSync(node_modules() + '/.prisma/client/schema.prisma');
 }
 class Grapheene {
-    constructor(clientId, apiKey, opts) {
+    constructor(clientId, apiKey, token, opts) {
         this._options = Object.assign({}, defaults, opts);
         this.apiKey = apiKey;
         this.clientId = clientId;
+        this.token = token;
         this.filesDir = path.dirname(__dirname) + path.sep + 'files';
         this.prismaDir = path.dirname(__dirname).replace(/(dist.*)/, 'prisma');
         if (!this.apiKey.startsWith('SK') || !this.apiKey) {
@@ -68,7 +73,10 @@ class Grapheene {
         fs.ensureDirSync(this.authDir);
     }
     setupZK() {
-        this.zk = new Zokrates_1.Zokrates(this.clientId, this.apiKey, { path: this.zkDir });
+        this.zk = new Zokrates_1.Zokrates(this.clientId, this.apiKey, this.token, {
+            path: this.zkDir,
+            rest: new Rest_1.default(config.baseUrl)
+        });
     }
     setupDevDb() {
         let tables = [];

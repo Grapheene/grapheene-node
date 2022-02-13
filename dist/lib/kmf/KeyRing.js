@@ -8,9 +8,12 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-const Member_1 = require("./Member");
-const KeyRingData_1 = require("./KeyRingData");
+const Member_1 = __importDefault(require("./Member"));
+const KeyRingData_1 = __importDefault(require("./KeyRingData"));
 // TODO: Hook into the dashboard API to pull program files
 // TODO: Add mongo db connector
 class KeyRing {

@@ -1,4 +1,5 @@
 import axios, {AxiosInstance, AxiosResponse} from "axios";
+
 const FormData = require('form-data');
 
 class Rest {
@@ -23,6 +24,10 @@ class Rest {
 
     get(endpoint: string, params?: any) {
         return this._request(endpoint, 'GET', params)
+    }
+
+    download(endpoint: string, params?: any) {
+        return this._request(endpoint, 'DOWNLOAD', params)
     }
 
     put(endpoint: string, params?: any) {
@@ -50,6 +55,11 @@ class Rest {
             config.params = params;
         }
 
+        if (config.method === 'download') {
+            config.responseType = 'blob'
+            config.method = 'get';
+        }
+
 
         if (config.method !== 'get' && config.method !== 'del' && config.method !== 'form') {
             config.data = params;
@@ -62,7 +72,7 @@ class Rest {
             }
             config.data = bodyFormData;
             config.method = 'post';
-            config.headers["Content-Type"] = "multipart/form-data; boundary="+bodyFormData.getBoundary();
+            config.headers["Content-Type"] = "multipart/form-data; boundary=" + bodyFormData.getBoundary();
         }
 
 
