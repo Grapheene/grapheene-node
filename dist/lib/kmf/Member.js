@@ -111,7 +111,8 @@ class Member {
                         encrypted: yield encryption.encrypt(dataOrFilePath, yield this.getKeys()),
                         service: 'unsaved'
                     };
-                    resolve(yield this._keyRing.addData(keyRingData));
+                    yield this._keyRing.addData(keyRingData);
+                    resolve(keyRingData);
                 }
             }
             if (this._mode === 'file') {
@@ -126,26 +127,22 @@ class Member {
             }
         }));
     }
-    decrypt(keyRingData, encrypted) {
+    decrypt(keyRingData) {
         return __awaiter(this, void 0, void 0, function* () {
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
                 if (this._mode === null) {
                     reject("decrypt must be used with file() or data()");
                 }
                 if (this._mode === 'data') {
-                    if (!encrypted) {
+                    if (!keyRingData.encrypted) {
                         reject("encrypted is required for data mode");
                     }
-                    resolve({
-                        keyRingData: keyRingData,
-                        decrypted: yield encryption.decrypt(encrypted, yield this.getKeys())
-                    });
+                    const result = Object.assign(Object.assign({}, keyRingData), { decrypted: yield encryption.decrypt(keyRingData.encrypted, yield this.getKeys()) });
+                    resolve(result);
                 }
                 if (this._mode === 'file') {
                     yield encryption.decryptFile(keyRingData.path, yield this.getKeys());
-                    resolve({
-                        keyRingData: keyRingData
-                    });
+                    resolve(keyRingData);
                 }
             }));
         });

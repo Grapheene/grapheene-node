@@ -70,6 +70,7 @@ interface KeyRingDataRequest {
     name: string;
     path: string;
     encrypted?: any;
+    decrypted?: any;
     service: 'cloud' | 'local' | 'unsaved';
 }
 

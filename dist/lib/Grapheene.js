@@ -46,12 +46,16 @@ class Grapheene {
         this.token = token;
         this.filesDir = path.dirname(__dirname) + path.sep + 'files';
         this.prismaDir = path.dirname(__dirname).replace(/(dist.*)/, 'prisma');
+        /*
         if (!this.apiKey.startsWith('SK') || !this.apiKey) {
-            throw new Error('Invalid APK Key');
+            throw new Error('Invalid APK Key')
         }
+
         if (!this.clientId.startsWith('US') || !this.clientId) {
-            throw new Error('Invalid Client ID');
+            throw new Error('Invalid Client ID')
         }
+
+         */
         this.zkDir = this.filesDir + path.sep + 'zk';
         this.cryptoDir = this.filesDir + path.sep + 'encrypt';
         this.dbDir = this.filesDir + path.sep + 'db';
