@@ -84,6 +84,8 @@ export class Grapheene {
     }
 
     async setup() {
+        try{
+
 
         this.zk = new Zokrates(this.clientId, this.apiKey, this.token, {
             path: this.zkDir,
@@ -105,6 +107,11 @@ export class Grapheene {
         this.setupKMS()
         this.setupStorage()
         this._kmf.ring.storage = this._storage;
+        return true;
+        }catch (e){
+            console.log(e)
+            return false;
+        }
 
     }
 

@@ -71,26 +71,33 @@ class Grapheene {
     }
     setup() {
         return __awaiter(this, void 0, void 0, function* () {
-            this.zk = new Zokrates_1.Zokrates(this.clientId, this.apiKey, this.token, {
-                path: this.zkDir,
-                rest: new Rest_1.default(config.baseUrl)
-            });
-            yield this.zk.setup();
-            this._restClient = new AuthorizedRest_1.default(config.baseUrl, this.clientId, this.zk, this.authDir);
-            if (process.env.DATABASE_URL) {
-                this.setupDb();
-            }
-            else {
-                this._db = new sqlite.Database(this.dbDir + path.sep + 'grapheene.db', (err) => {
-                    if (err) {
-                        throw new Error(err.message);
-                    }
-                    this.setupDevDb();
+            try {
+                this.zk = new Zokrates_1.Zokrates(this.clientId, this.apiKey, this.token, {
+                    path: this.zkDir,
+                    rest: new Rest_1.default(config.baseUrl)
                 });
+                yield this.zk.setup();
+                this._restClient = new AuthorizedRest_1.default(config.baseUrl, this.clientId, this.zk, this.authDir);
+                if (process.env.DATABASE_URL) {
+                    this.setupDb();
+                }
+                else {
+                    this._db = new sqlite.Database(this.dbDir + path.sep + 'grapheene.db', (err) => {
+                        if (err) {
+                            throw new Error(err.message);
+                        }
+                        this.setupDevDb();
+                    });
+                }
+                this.setupKMS();
+                this.setupStorage();
+                this._kmf.ring.storage = this._storage;
+                return true;
             }
-            this.setupKMS();
-            this.setupStorage();
-            this._kmf.ring.storage = this._storage;
+            catch (e) {
+                console.log(e);
+                return false;
+            }
         });
     }
     setupDevDb() {
