@@ -17,11 +17,17 @@ export class KMF {
         this.ring = new KeyRing(this._restClient, this._db);
     }
 
-    set ring (keyRing) {
+    set ring(keyRing) {
         this._ring = keyRing;
     }
 
-    get ring (){
+    get ring() {
         return this._ring;
+    }
+
+    async destroy() {
+        const result = await this._restClient.del('/kmf/ring/' + this._ring.uuid);
+        this.ring = null;
+        return result;
     }
 }

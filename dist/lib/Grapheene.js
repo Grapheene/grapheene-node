@@ -44,7 +44,7 @@ class Grapheene {
         this.apiKey = apiKey;
         this.clientId = clientId;
         this.token = token;
-        this.filesDir = path.dirname(__dirname) + path.sep + 'files';
+        this.filesDir = path.dirname(__dirname) + path.sep + this.clientId + path.sep + 'files';
         this.prismaDir = path.dirname(__dirname).replace(/(dist.*)/, 'prisma');
         /*
         if (!this.apiKey.startsWith('SK') || !this.apiKey) {

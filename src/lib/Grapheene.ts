@@ -54,7 +54,7 @@ export class Grapheene {
         this.clientId = clientId;
         this.token = token;
 
-        this.filesDir = path.dirname(__dirname) + path.sep + 'files'
+        this.filesDir = path.dirname(__dirname) + path.sep + this.clientId + path.sep + 'files'
         this.prismaDir = path.dirname(__dirname).replace(/(dist.*)/, 'prisma')
         /*
         if (!this.apiKey.startsWith('SK') || !this.apiKey) {
@@ -84,31 +84,31 @@ export class Grapheene {
     }
 
     async setup() {
-        try{
+        try {
 
 
-        this.zk = new Zokrates(this.clientId, this.apiKey, this.token, {
-            path: this.zkDir,
-            rest: new Rest(config.baseUrl)
-        });
-        await this.zk.setup();
-        this._restClient = new AuthorizedRest(config.baseUrl, this.clientId, this.zk, this.authDir);
-        if (process.env.DATABASE_URL) {
-            this.setupDb()
-        } else {
-            this._db = new sqlite.Database(this.dbDir + path.sep + 'grapheene.db', (err: Error) => {
-                if (err) {
-                    throw new Error(err.message)
-                }
-                this.setupDevDb();
+            this.zk = new Zokrates(this.clientId, this.apiKey, this.token, {
+                path: this.zkDir,
+                rest: new Rest(config.baseUrl)
             });
-        }
+            await this.zk.setup();
+            this._restClient = new AuthorizedRest(config.baseUrl, this.clientId, this.zk, this.authDir);
+            if (process.env.DATABASE_URL) {
+                this.setupDb()
+            } else {
+                this._db = new sqlite.Database(this.dbDir + path.sep + 'grapheene.db', (err: Error) => {
+                    if (err) {
+                        throw new Error(err.message)
+                    }
+                    this.setupDevDb();
+                });
+            }
 
-        this.setupKMS()
-        this.setupStorage()
-        this._kmf.ring.storage = this._storage;
-        return true;
-        }catch (e){
+            this.setupKMS()
+            this.setupStorage()
+            this._kmf.ring.storage = this._storage;
+            return true;
+        } catch (e) {
             console.log(e)
             return false;
         }
