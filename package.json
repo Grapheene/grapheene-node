@@ -16,7 +16,10 @@
   "keywords": [
     "grapheene",
     "api",
-    "encryption"
+    "encryption",
+    "privacy",
+    "gdpr",
+    "hippa"
   ],
   "author": "Grapheene <dev@grapheene.net>",
   "license": "MIT",
@@ -65,6 +68,6 @@
     "win32"
   ],
   "engines": {
-    "node": ">=16"
+    "node": ">=15.0.0"
   }
 }
