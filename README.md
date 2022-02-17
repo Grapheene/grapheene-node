@@ -21,14 +21,13 @@ The goal is to keep your data secure even if there is an unwanted leak from your
 
 Getting started with Grapheene is quick and easy! In just a few steps you can protect your application with Grapheene's industry leading Zero Knoweldge authentication  and AES256 encryption.
 
-### Refrences
+### References
 
 Grapheene Dashboard [https://dashboard.grapheene.com/](https://dashboard.grapheene.com/)
 
 Grapheene API and SDK documentation [https://docs.grapheene.com/](https://docs.grapheene.com/)
 
 NodeJS [https://nodejs.dev/learn/how-to-install-nodejs](https://nodejs.dev/learn/how-to-install-nodejs)
-
 
 ### Prerequisite
 
@@ -59,7 +58,7 @@ All credentials are accessible from the [Grapheene Dashboard](https://dashboard.
 
 ### My First Grapheene Application
 
-It is time to perform your first encryption with Grapheene! The code snippet below is all you need to get started. 
+It is time to perform your first encryption with Grapheene! The code snippet below is all you need to get started.
 
 Replace your credentials with the appropriate ones.
 
