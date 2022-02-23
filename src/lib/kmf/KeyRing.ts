@@ -1,13 +1,11 @@
 import Member from "./Member";
 import KeyRingData from "./KeyRingData";
-import {KeyData, KeyRingDataOptions, KeyRingDataRequest, KeyRingOptions, MemberOptions} from "../../../index";
+import {KeyData, KeyRingDataRequest, KeyRingOptions, MemberOptions} from "../../../index";
 import Rest from "../rest/Rest";
 import {Database} from "sqlite3";
 import {Storage} from "../storage/Storage";
 import {PrismaClient} from "@prisma/client";
 
-// TODO: Hook into the dashboard API to pull program files
-// TODO: Add mongo db connector
 
 export default class KeyRing {
     uuid: string;
@@ -68,12 +66,8 @@ export default class KeyRing {
         return this;
     }
 
-    async load(nameOrUUID: string) {
-        let params: { ring_name?: string, uuid?: string } = {ring_name: nameOrUUID}
-        if (nameOrUUID.length === 34) {
-            params = {uuid: nameOrUUID}
-        }
-        const keyRing = await this._restClient.post('/kmf/ring', params);
+    async load(uuid: string) {
+        const keyRing = await this._restClient.get(`/kmf/ring/${uuid}`);
         this.setOptions(keyRing.data)
         return this;
     }
