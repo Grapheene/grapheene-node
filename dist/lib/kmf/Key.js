@@ -39,7 +39,7 @@ class Key {
             }).then((row) => {
                 console.log('Key ' + row.uuid + 'Saved in DB');
             }).catch((e) => {
-                console.log(e);
+                console.log(e.message);
             });
         }
     }

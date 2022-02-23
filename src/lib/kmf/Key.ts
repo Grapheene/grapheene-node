@@ -48,10 +48,10 @@ export default class Key {
                     active: isActive === 1,
                     data: JSON.stringify(keyData)
                 }
-            }).then((row) => {
+            }).then((row: any) => {
                 console.log('Key '+row.uuid+'Saved in DB');
-            }).catch((e)=>{
-                console.log(e)
+            }).catch((e: Error)=>{
+                console.log(e.message)
             });
         }
     }

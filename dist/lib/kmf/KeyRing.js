@@ -14,8 +14,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const Member_1 = __importDefault(require("./Member"));
 const KeyRingData_1 = __importDefault(require("./KeyRingData"));
-// TODO: Hook into the dashboard API to pull program files
-// TODO: Add mongo db connector
 class KeyRing {
     constructor(restClient, DB, options) {
         if (options) {
@@ -62,13 +60,9 @@ class KeyRing {
             return this;
         });
     }
-    load(nameOrUUID) {
+    load(uuid) {
         return __awaiter(this, void 0, void 0, function* () {
-            let params = { ring_name: nameOrUUID };
-            if (nameOrUUID.length === 34) {
-                params = { uuid: nameOrUUID };
-            }
-            const keyRing = yield this._restClient.post('/kmf/ring', params);
+            const keyRing = yield this._restClient.get(`/kmf/ring/${uuid}`);
             this.setOptions(keyRing.data);
             return this;
         });
