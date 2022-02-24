@@ -67,7 +67,7 @@ class Storage {
                     }
                 }
                 catch (e) {
-                    console.log(e);
+                    console.error('Unable to save keyring data:', e);
                     reject(e);
                 }
             }));

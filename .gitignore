@@ -100,9 +100,14 @@ typings/
 
 # TernJS port file
 .tern-port
+
+# custom
 /files/
 /just_playing/
 /test.js
 /db/
 /dist/files/
 /prisma/schema.prisma
+
+# Ignore locally generated CL folders
+/dist/CL*

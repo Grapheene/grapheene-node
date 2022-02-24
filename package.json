@@ -4,7 +4,7 @@
   "description": "A Grapheene SDK for NodeJS",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "rm -rf ./dist/* && npm run build-ts",
+    "build": "rm -rf ./dist/lib && rm -rf ./dist/index.js* && npm run build-ts",
     "build:browser": "rm -rf ./dist/* && npm run build-ts",
     "build-ts": "tsc",
     "watch-ts": "tsc -w"

@@ -44,9 +44,12 @@ class TokenManager {
             const rsa = fs.readFileSync(this._authDir + '/rsa', 'utf8');
             jwt.verify(token, rsa, { algorithms: ['RS256'] }, (err, decoded) => {
                 if (err) {
-                    console.log(err.message);
                     if (err.message === 'jwt expired') {
+                        console.log('Refreshing JWT token...');
                         e.emit('refreshToken');
+                    }
+                    else {
+                        console.error('Unable to verify token:', err.message);
                     }
                 }
                 else {
@@ -93,9 +96,12 @@ class TokenManager {
             if (this._token && this._rsa) {
                 jwt.verify(this._token, this._rsa, { algorithms: ['RS256'] }, function (err, decoded) {
                     if (err) {
-                        console.log(err.message);
                         if (err.message === 'jwt expired') {
+                            console.log('Refreshing JWT...');
                             e.emit('refreshToken');
+                        }
+                        else {
+                            console.error('Unable to verify token:', err.message);
                         }
                     }
                     else {

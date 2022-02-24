@@ -85,8 +85,6 @@ export class Grapheene {
 
     async setup() {
         try {
-
-
             this.zk = new Zokrates(this.clientId, this.apiKey, this.token, {
                 path: this.zkDir,
                 rest: new Rest(config.baseUrl)
@@ -109,10 +107,9 @@ export class Grapheene {
             this._kmf.ring.storage = this._storage;
             return true;
         } catch (e) {
-            console.log(e)
+            console.error('Unable to setup Grapheene:', e);
             return false;
         }
-
     }
 
 
@@ -158,7 +155,6 @@ export class Grapheene {
                 fs.copyFileSync(this.prismaDir + '/schemas/postgres.prisma', this.prismaDir + '/schema.prisma');
                 this.run('prisma generate --schema ' + this.prismaDir + '/schema.prisma');
                 if (!fs.existsSync(this.prismaDir + '/migrations')) {
-                    //console.log(this._options)
                     if (this._options.db.migrate) {
                         this.run('prisma migrate dev --name init --schema ' + this.prismaDir + '/schema.prisma');
                         this.run('prisma migrate deploy --schema ' + this.prismaDir + '/schema.prisma');
@@ -170,8 +166,9 @@ export class Grapheene {
 
         }
         while (!fs.existsSync(node_modules() + '/.prisma/client/schema.prisma')) {
-            console.log('Setting Up DB')
+            process.stdout.write('\rSetting up database...');
         }
+        process.stdout.write('done!\n');
         const {PrismaClient} = require('@prisma/client');
 
         this._db = new PrismaClient()
@@ -194,11 +191,10 @@ export class Grapheene {
         }
         if (result.match(/^error/i)) {
             retObj.error = result;
-            console.error(retObj.error)
+            console.error(`Unable to run ${command}:`, retObj.error);
             return retObj
         } else {
             retObj.result = result;
-            // console.log(retObj.result)
             return retObj
         }
 

@@ -34,7 +34,8 @@ export class Zokrates {
 
 
     }
-    async setup(){
+
+    async setup() {
         if (!this.filesExist()) {
             await this.getZkFiles(() => {
                 const fields = this.getZkFields();
@@ -44,37 +45,68 @@ export class Zokrates {
     }
 
     filesExist() {
-        if (fs.existsSync(`${this._storePath}${path.sep}out`) && `${this._storePath}${path.sep}proving.key`) {
-            return true;
-        } else {
-            return false;
-        }
+        return fs.existsSync(`${this._storePath}${path.sep}out`) && fs.existsSync(`${this._storePath}${path.sep}proving.key`);
     }
 
     private getZkFiles(callback: Function) {
-
         return new Promise(async (resolve, reject) => {
-            console.log('DL Files')
+            console.log('Downloading Necessary Proof Files...')
             const finishedDownload = promisify(stream.finished);
-            await this._rest.get(`/clientIds/${this._clientId}/download?token=${this._token}`).then(async (result)=>{
+            let outDownloadedBytes = 0;
+            let outDownloadPercent = 0;
+            let proofDownloadedBytes = 0;
+            let proofDownloadPercent = 0;
+            await this._rest.get(`/clientIds/${this._clientId}/download?token=${this._token}`).then(async (result) => {
                 const outEndPoint = result.data.data[0].sdk;
                 const proovingPoint = result.data.data[0].proof;
-                const out = await axios({
-                    method: 'GET',
-                    url: outEndPoint,
-                    responseType: 'stream',
-                })
-                const outwriter = fs.createWriteStream(`${this._storePath}${path.sep}out`);
-                out.data.pipe(outwriter)
-                await finishedDownload(outwriter);
-                const prooving = await axios({
-                    method: 'GET',
-                    url: proovingPoint,
-                    responseType: 'stream',
-                })
-                const proovingwriter = fs.createWriteStream(`${this._storePath}${path.sep}proving.key`);
-                prooving.data.pipe(proovingwriter)
-                await finishedDownload(proovingwriter);
+
+                try {
+                    const prooving = await axios({
+                        method: 'GET',
+                        url: proovingPoint,
+                        responseType: 'stream',
+                    })
+                    const proovingwriter = fs.createWriteStream(`${this._storePath}${path.sep}proving.key`);
+                    const totalLengthP = parseInt(prooving.headers['content-length'], 10);
+                    prooving.data.on('data', (chunk: any) => {
+                        proofDownloadedBytes += chunk.length;
+                        const prevPercent = proofDownloadPercent;
+                        proofDownloadPercent = Math.ceil(proofDownloadedBytes / totalLengthP * 100);
+                        if (proofDownloadPercent > prevPercent) {
+                            process.stdout.write(`\rproof download: ${proofDownloadPercent}%`);
+                        }
+                    });
+                    prooving.data.pipe(proovingwriter)
+                    await finishedDownload(proovingwriter);
+                } catch (err: any) {
+                    console.error('There was an error downloading the prooving file:', err);
+                }
+                process.stdout.write('\n');
+
+                try {
+                    const out = await axios({
+                        method: 'GET',
+                        url: outEndPoint,
+                        responseType: 'stream',
+                    })
+                    const totalLength = parseInt(out.headers['content-length'], 10);
+                    const outwriter = fs.createWriteStream(`${this._storePath}${path.sep}out`);
+                    out.data.on('data', (chunk: any) => {
+                        outDownloadedBytes += chunk.length;
+                        const prevPercent = outDownloadPercent;
+                        outDownloadPercent = Math.ceil(outDownloadedBytes / totalLength * 100);
+                        if (outDownloadPercent > prevPercent) {
+                            process.stdout.write(`\rout download: ${outDownloadPercent}%`);
+                        }
+                    });
+                    out.data.pipe(outwriter)
+                    await finishedDownload(outwriter);
+                } catch (err: any) {
+                    console.error('There was an error downloading the out file:', err);
+                }
+                process.stdout.write('\n');
+
+                console.log('Download Complete.')
                 callback();
                 resolve(true)
             })
@@ -132,7 +164,7 @@ export class Zokrates {
         if (!compiled.error) {
             return fs.readJsonSync(`${this._storePath}${path.sep}proof.json`);
         }
-        console.log(compiled.error);
+        console.error('Unable to generate proof:', compiled.error);
         return false;
     }
 

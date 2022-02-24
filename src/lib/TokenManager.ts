@@ -47,9 +47,11 @@ export class TokenManager {
             jwt.verify(token, rsa, {algorithms: ['RS256']}, (err: Error, decoded: any) => {
 
                 if (err) {
-                    console.log(err.message)
                     if (err.message === 'jwt expired') {
+                        console.log('Refreshing JWT token...')
                         e.emit('refreshToken')
+                    } else {
+                        console.error('Unable to verify token:', err.message)
                     }
                 } else {
                     const unixtime = Math.floor(+new Date() / 1000)
@@ -98,9 +100,11 @@ export class TokenManager {
                 jwt.verify(this._token, this._rsa, {algorithms: ['RS256']}, function (err: Error, decoded: any) {
 
                     if (err) {
-                        console.log(err.message)
                         if (err.message === 'jwt expired') {
+                            console.log('Refreshing JWT...')
                             e.emit('refreshToken')
+                        } else {
+                            console.error('Unable to verify token:', err.message)
                         }
                     } else {
                         const unixtime = Math.floor(+new Date() / 1000)
