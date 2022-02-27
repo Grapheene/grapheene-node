@@ -48,7 +48,7 @@ export class TokenManager {
 
                 if (err) {
                     if (err.message === 'jwt expired') {
-                        console.log('Refreshing JWT token...')
+                        console.log('Refreshing JWT...')
                         e.emit('refreshToken')
                     } else {
                         console.error('Unable to verify token:', err.message)

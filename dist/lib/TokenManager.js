@@ -45,7 +45,7 @@ class TokenManager {
             jwt.verify(token, rsa, { algorithms: ['RS256'] }, (err, decoded) => {
                 if (err) {
                     if (err.message === 'jwt expired') {
-                        console.log('Refreshing JWT token...');
+                        console.log('Refreshing JWT...');
                         e.emit('refreshToken');
                     }
                     else {
