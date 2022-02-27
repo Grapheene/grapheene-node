@@ -132,7 +132,7 @@ export class AESKey {
                 return x
             })
             .catch((err: Error) => {
-                console.error("An error occured while Encrypting the file, try again!", err)
+                console.error('Unable to encrypt:', err)
                 return {}
             })
     }
@@ -159,7 +159,7 @@ export class AESKey {
                   hex: ()=>bytesToHex(dec)
                 }*/
             }).catch((err: Error): any => {
-                console.error("Key.decrypt:WRONG_KEY", err)
+                console.error("Unable to decrypt:", err)
                 return null
             })
     }
@@ -173,7 +173,7 @@ export class AESKey {
         return new Promise((resolve, reject) => {
 
             rs.on('open', () => {
-                console.log('File opened')
+                console.log('File successfully opened')
             })
             rs.on('data', async (chunk: any) => {
                 const encrypted = await this.encrypt(chunk);
@@ -182,7 +182,7 @@ export class AESKey {
                 }
             })
             rs.on('close', () => {
-                console.log('File closed')
+                console.log('File successfully closed')
             })
 
             rs.on('end', function () {
@@ -209,7 +209,7 @@ export class AESKey {
         return new Promise((resolve, reject) => {
 
             rs.on('open', () => {
-                console.log('File opened')
+                console.log('File successfully opened')
             })
             rs.on('data', async (chunk: any) => {
                 const decrypted = await this.decrypt(chunk);
@@ -218,7 +218,7 @@ export class AESKey {
                 }
             })
             rs.on('close', () => {
-                console.log('File closed')
+                console.log('File successfully closed')
             })
 
             rs.on('end', function () {
@@ -261,7 +261,7 @@ export class AESKey {
                         resolve([encFile, content])
                     })
                     .catch((err: Error) => {
-                        console.error("An error occured while Encrypting the file, try again!", err)
+                        console.error('Unable to encrypt:', err)
                         resolve(null)
                     })
             }
@@ -293,7 +293,7 @@ export class AESKey {
                         resolve(blob)
                     })
                     .catch((err: Error) => {
-                        console.error("Key.decryptFile:WRONG_KEY", err)
+                        console.error("Unable to decrypt:", err)
                         resolve(null)
                     })
             }

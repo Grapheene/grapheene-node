@@ -61,36 +61,66 @@ class Zokrates {
         });
     }
     filesExist() {
-        if (fs.existsSync(`${this._storePath}${path.sep}out`) && `${this._storePath}${path.sep}proving.key`) {
-            return true;
-        }
-        else {
-            return false;
-        }
+        return fs.existsSync(`${this._storePath}${path.sep}out`) && fs.existsSync(`${this._storePath}${path.sep}proving.key`);
     }
     getZkFiles(callback) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-            console.log('DL Files');
+            console.log('Downloading Necessary Proof Files...');
             const finishedDownload = (0, util_1.promisify)(stream.finished);
+            let outDownloadedBytes = 0;
+            let outDownloadPercent = 0;
+            let proofDownloadedBytes = 0;
+            let proofDownloadPercent = 0;
             yield this._rest.get(`/clientIds/${this._clientId}/download?token=${this._token}`).then((result) => __awaiter(this, void 0, void 0, function* () {
                 const outEndPoint = result.data.data[0].sdk;
                 const proovingPoint = result.data.data[0].proof;
-                const out = yield (0, axios_1.default)({
-                    method: 'GET',
-                    url: outEndPoint,
-                    responseType: 'stream',
-                });
-                const outwriter = fs.createWriteStream(`${this._storePath}${path.sep}out`);
-                out.data.pipe(outwriter);
-                yield finishedDownload(outwriter);
-                const prooving = yield (0, axios_1.default)({
-                    method: 'GET',
-                    url: proovingPoint,
-                    responseType: 'stream',
-                });
-                const proovingwriter = fs.createWriteStream(`${this._storePath}${path.sep}proving.key`);
-                prooving.data.pipe(proovingwriter);
-                yield finishedDownload(proovingwriter);
+                try {
+                    const prooving = yield (0, axios_1.default)({
+                        method: 'GET',
+                        url: proovingPoint,
+                        responseType: 'stream',
+                    });
+                    const proovingwriter = fs.createWriteStream(`${this._storePath}${path.sep}proving.key`);
+                    const totalLengthP = parseInt(prooving.headers['content-length'], 10);
+                    prooving.data.on('data', (chunk) => {
+                        proofDownloadedBytes += chunk.length;
+                        const prevPercent = proofDownloadPercent;
+                        proofDownloadPercent = Math.ceil(proofDownloadedBytes / totalLengthP * 100);
+                        if (proofDownloadPercent > prevPercent) {
+                            process.stdout.write(`\rproof download: ${proofDownloadPercent}%`);
+                        }
+                    });
+                    prooving.data.pipe(proovingwriter);
+                    yield finishedDownload(proovingwriter);
+                }
+                catch (err) {
+                    console.error('There was an error downloading the prooving file:', err);
+                }
+                process.stdout.write('\n');
+                try {
+                    const out = yield (0, axios_1.default)({
+                        method: 'GET',
+                        url: outEndPoint,
+                        responseType: 'stream',
+                    });
+                    const totalLength = parseInt(out.headers['content-length'], 10);
+                    const outwriter = fs.createWriteStream(`${this._storePath}${path.sep}out`);
+                    out.data.on('data', (chunk) => {
+                        outDownloadedBytes += chunk.length;
+                        const prevPercent = outDownloadPercent;
+                        outDownloadPercent = Math.ceil(outDownloadedBytes / totalLength * 100);
+                        if (outDownloadPercent > prevPercent) {
+                            process.stdout.write(`\rout download: ${outDownloadPercent}%`);
+                        }
+                    });
+                    out.data.pipe(outwriter);
+                    yield finishedDownload(outwriter);
+                }
+                catch (err) {
+                    console.error('There was an error downloading the out file:', err);
+                }
+                process.stdout.write('\n');
+                console.log('Download Complete.');
                 callback();
                 resolve(true);
             }));
@@ -146,7 +176,7 @@ class Zokrates {
         if (!compiled.error) {
             return fs.readJsonSync(`${this._storePath}${path.sep}proof.json`);
         }
-        console.log(compiled.error);
+        console.error('Unable to generate proof:', compiled.error);
         return false;
     }
     computeWitness(field1, field2, field3, field4) {

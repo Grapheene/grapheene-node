@@ -49,8 +49,6 @@ export class Storage {
         }
         return new Promise(async (resolve, reject) => {
             try {
-
-
                 if (this._medium === "local" && keyRingData.path === 'in:memory') {
                     if (typeof options === 'undefined' || !options.path) {
                         reject("filepath is required for data")
@@ -77,7 +75,7 @@ export class Storage {
                     resolve(await this._kmf.ring.updateData({uuid: keyRingData.uuid,path: keyRingData.path, name: keyRingData.name, service: this._medium}));
                 }
             } catch (e) {
-                console.log(e)
+                console.error('Unable to save keyring data:', e)
                 reject(e)
             }
         })

@@ -110,9 +110,9 @@ class KeyRing {
                 for (let x in this.members) {
                     if (this.members[x].uuid === nameOrUUID || this.members[x].name === nameOrUUID) {
                         yield this._restClient.del('/kmf/ring/' + this.uuid + '/member/' + this.members[x].uuid);
-                        this.members[x].destroy().then((message) => {
-                            console.log(message);
-                        }).catch(console.log);
+                        this.members[x].destroy().then(() => {
+                            console.log(`Successfully removed ${nameOrUUID} from the key ring`);
+                        }).catch((err) => console.error(`Unable to remove ${nameOrUUID} from the key ring:`, err));
                     }
                     else {
                         members.push(this.members[x]);

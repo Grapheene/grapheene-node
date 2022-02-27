@@ -74,7 +74,7 @@ export const encryptFile = (filePath: string, keys: KeyData): Promise<any> => {
 
             })
             .catch((e)=>{
-                console.log(e)
+                console.error('Unable to configure keys for file encryption:', e);
                 reject(e)
             })
     })

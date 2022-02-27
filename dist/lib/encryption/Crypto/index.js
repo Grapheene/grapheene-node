@@ -147,7 +147,7 @@ class AESKey {
                 return x;
             })
                 .catch((err) => {
-                console.error("An error occured while Encrypting the file, try again!", err);
+                console.error('Unable to encrypt:', err);
                 return {};
             });
         });
@@ -174,7 +174,7 @@ class AESKey {
                   hex: ()=>bytesToHex(dec)
                 }*/
             }).catch((err) => {
-                console.error("Key.decrypt:WRONG_KEY", err);
+                console.error("Unable to decrypt:", err);
                 return null;
             });
         });
@@ -188,7 +188,7 @@ class AESKey {
             const of = fs.createWriteStream(outPath);
             return new Promise((resolve, reject) => {
                 rs.on('open', () => {
-                    console.log('File opened');
+                    console.log('File successfully opened');
                 });
                 rs.on('data', (chunk) => __awaiter(this, void 0, void 0, function* () {
                     const encrypted = yield this.encrypt(chunk);
@@ -197,7 +197,7 @@ class AESKey {
                     }
                 }));
                 rs.on('close', () => {
-                    console.log('File closed');
+                    console.log('File successfully closed');
                 });
                 rs.on('end', function () {
                     let s = this;
@@ -223,7 +223,7 @@ class AESKey {
             const of = fs.createWriteStream(outPath);
             return new Promise((resolve, reject) => {
                 rs.on('open', () => {
-                    console.log('File opened');
+                    console.log('File successfully opened');
                 });
                 rs.on('data', (chunk) => __awaiter(this, void 0, void 0, function* () {
                     const decrypted = yield this.decrypt(chunk);
@@ -232,7 +232,7 @@ class AESKey {
                     }
                 }));
                 rs.on('close', () => {
-                    console.log('File closed');
+                    console.log('File successfully closed');
                 });
                 rs.on('end', function () {
                     let s = this;
@@ -275,7 +275,7 @@ class AESKey {
                         resolve([encFile, content]);
                     })
                         .catch((err) => {
-                        console.error("An error occured while Encrypting the file, try again!", err);
+                        console.error('Unable to encrypt:', err);
                         resolve(null);
                     });
                 });
@@ -308,7 +308,7 @@ class AESKey {
                         resolve(blob);
                     })
                         .catch((err) => {
-                        console.error("Key.decryptFile:WRONG_KEY", err);
+                        console.error("Unable to decrypt:", err);
                         resolve(null);
                     });
                 });

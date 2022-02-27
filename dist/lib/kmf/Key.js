@@ -20,7 +20,7 @@ class Key {
                           FROM keystore
                           WHERE uuid = '${uuid}'`, (err, row) => {
                 if (err) {
-                    console.log(err);
+                    console.error('Unable to get from the database:', err);
                 }
                 if (!row) {
                     if (this._db instanceof sqlite3_1.Database) {
@@ -37,9 +37,9 @@ class Key {
                     data: JSON.stringify(keyData)
                 }
             }).then((row) => {
-                console.log('Key ' + row.uuid + 'Saved in DB');
+                console.log(`Successfully saved ${row.uuid} to the keyStore`);
             }).catch((e) => {
-                console.log(e.message);
+                console.error('Unable to save to the keyStore:', e.message);
             });
         }
     }

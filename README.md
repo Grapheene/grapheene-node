@@ -54,7 +54,7 @@ The Service Token is an account level credential, if necessary this credential c
 
 All credentials are accessible from the [Grapheene Dashboard](https://dashboard.grapheene.com)
 
-![Dashboard Example](cred_example.png)
+![Dashboard Example](assets/cred_example.png)
 
 ### My First Grapheene Application
 

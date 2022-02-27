@@ -45,14 +45,13 @@ export default class Member {
         try {
             privateKey = await this._master.keys[0].load('privateKey');
         } catch (e) {
-            console.log("Unable to load master key");
+            console.error('Unable to load master key:', e);
             throw new Error(e.message)
         }
         try {
             publicKey = await this._keys[0].load('publicKey');
         } catch (e) {
-            console.log(e)
-            console.log("Unable to load member key " + this._keys[0].uuid);
+            console.log(`Unable to load member key ${this._keys[0].uuid}:`, e);
             throw new Error(e.message)
         }
 
