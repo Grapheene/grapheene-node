@@ -9,10 +9,10 @@ import Rest from "./rest/Rest";
 
 const config = require('../../config.json')
 const sqlite = require('sqlite3').verbose();
-const node_modules = require('node_modules-path');
 
 const fs = require('fs-extra');
 const path = require('path');
+const node_modules = `${__dirname}${path.sep}node_modules`;
 const defaults = {
     medium: 'local',
     dir: './',
@@ -21,11 +21,11 @@ const defaults = {
     }
 }
 
-if (fs.existsSync(node_modules() + '/.prisma/client/package.json')) {
-    fs.unlinkSync(node_modules() + '/.prisma/client/package.json')
+if (fs.existsSync(node_modules + '/.prisma/client/package.json')) {
+    fs.unlinkSync(node_modules + '/.prisma/client/package.json')
 }
-if (fs.existsSync(node_modules() + '/.prisma/client/schema.prisma')) {
-    fs.unlinkSync(node_modules() + '/.prisma/client/schema.prisma')
+if (fs.existsSync(node_modules + '/.prisma/client/schema.prisma')) {
+    fs.unlinkSync(node_modules + '/.prisma/client/schema.prisma')
 }
 
 
@@ -165,7 +165,7 @@ export class Grapheene {
 
 
         }
-        while (!fs.existsSync(node_modules() + '/.prisma/client/schema.prisma')) {
+        while (!fs.existsSync(node_modules + '/.prisma/client/schema.prisma')) {
             process.stdout.write('\rSetting up database...');
         }
         process.stdout.write('done!\n');
