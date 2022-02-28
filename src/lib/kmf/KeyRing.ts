@@ -1,11 +1,9 @@
+import {PrismaClient} from "@prisma/client";
 import Member from "./Member";
 import KeyRingData from "./KeyRingData";
 import {KeyData, KeyRingDataRequest, KeyRingOptions, MemberOptions} from "../../../index";
 import Rest from "../rest/Rest";
-import {Database} from "sqlite3";
 import {Storage} from "../storage/Storage";
-import {PrismaClient} from "@prisma/client";
-
 
 export default class KeyRing {
     uuid: string;
@@ -15,12 +13,14 @@ export default class KeyRing {
     members: Array<Member>
     createdAt: string;
     updatedAt: string;
+
     private _master: Member;
     private _storage: Storage;
-    private readonly _restClient: Rest;
-    private readonly _db: Database | PrismaClient;
 
-    constructor(restClient: Rest, DB: Database | PrismaClient, options?: KeyRingOptions) {
+    private readonly _restClient: Rest;
+    private readonly _db: PrismaClient;
+
+    constructor(restClient: Rest, DB: PrismaClient, options?: KeyRingOptions) {
         if (options) {
             this.setOptions(options)
         }
@@ -28,7 +28,6 @@ export default class KeyRing {
         this.members = [];
         this._restClient = restClient;
         this._db = DB;
-
     }
 
     private setOptions(options: KeyRingOptions, key?: KeyData) {
@@ -82,11 +81,9 @@ export default class KeyRing {
                 }
             }
         }
-
     }
 
     async addMember(data: MemberOptions) {
-
         for (let x in this.members) {
             if (this.members[x].name === data.name) {
                 return this.members[x];
@@ -104,7 +101,6 @@ export default class KeyRing {
             throw new Error(result.statusText)
         }
         return member;
-
     }
 
     async delMember(nameOrUUID: string) {
@@ -138,11 +134,9 @@ export default class KeyRing {
                 }
             }
         }
-
     }
 
     async addData(request: KeyRingDataRequest) {
-
         for (let x in this.data) {
             if (this.data[x].name === request.name) {
                 return this.data[x];
@@ -158,11 +152,9 @@ export default class KeyRing {
         } else {
             throw new Error(result.statusText)
         }
-
     }
 
     async updateData(request: KeyRingData) {
-
         const result = await this._restClient.put('/kmf/ring/' + this.uuid + '/data/' + request.uuid, request);
         let dataResponse: KeyRingData;
         if (result.status === 200) {
@@ -179,7 +171,6 @@ export default class KeyRing {
         } else {
             throw new Error(result.statusText)
         }
-
     }
 
     async delData(nameOrUUID: string) {
