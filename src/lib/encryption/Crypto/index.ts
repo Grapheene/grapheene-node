@@ -1,7 +1,5 @@
 import * as crypto from "crypto";
 
-const atob = require('atob');
-const btoa = require('btoa');
 const FileReader = require('filereader');
 const fs = require("fs-extra")
 const path = require("path")
@@ -332,7 +330,7 @@ class ExportedKey {
     }
 
     base64() {
-        return btoa(this.toString())
+        return Buffer.from(this.toString(), 'binary').toString('base64')
     }
 
     pem() {
@@ -744,16 +742,16 @@ export async function importJwk(jwk: any) {
 }
 
 export function jwkToPem(jwk: any, opts: any = {}) {
-    let str = btoa(JSON.stringify(jwk)).replace(/(.{64})/gm, '$1\n').replace(/\s$/, '')
-    let type = opts.private ? 'PRIVATE ' : (opts.hmac ? '' : 'PUBLIC ')
+    const str = Buffer.from(JSON.stringify(jwk), 'binary').toString('base64').replace(/(.{64})/gm, '$1\n').replace(/\s$/, '')
+    const type = opts.private ? 'PRIVATE ' : (opts.hmac ? '' : 'PUBLIC ')
     return `-----BEGIN ${type}KEY-----
 ${str}
 -----END ${type}KEY-----`
 }
 
 export function pemToJwk(pem: any) {
-    let jwkStr = atob(pem.replace(/-----(BEGIN|END)(.*)-----/g, '').replace(/\s/g, ''))
-    //console.log('JWKSTR', jwkStr)
+    const jwkStr = Buffer.from(pem.replace(/-----(BEGIN|END)(.*)-----/g, '').replace(/\s/g, ''), 'base64').toString('binary');
+    // console.log('JWKSTR', jwkStr)
     let jwk
     try {
         jwk = JSON.parse(jwkStr)

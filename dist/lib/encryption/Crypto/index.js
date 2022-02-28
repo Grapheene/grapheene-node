@@ -30,8 +30,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPublicJwk = exports.pemToJwk = exports.jwkToPem = exports.importJwk = exports.exportJwk = exports.hmacSign = exports.generateEncryptedKey = exports.decryptFileStream = exports.encryptFileStream = exports.encryptFile = exports.decryptFile = exports.encryptHex = exports.encrypt = exports.decrypt = exports.generateRandomString = exports.hexToBytes = exports.bytesToHex = exports.ab2str = exports.str2ab = exports.HMAC = exports.ECDHKeyPair = exports.AESKey = void 0;
 const crypto = __importStar(require("crypto"));
-const atob = require('atob');
-const btoa = require('btoa');
 const FileReader = require('filereader');
 const fs = require("fs-extra");
 const path = require("path");
@@ -342,7 +340,7 @@ class ExportedKey {
         });
     }
     base64() {
-        return btoa(this.toString());
+        return Buffer.from(this.toString(), 'binary').toString('base64');
     }
     pem() {
         let str = this.base64().replace(/(.{64})/gm, '$1\n');
@@ -725,16 +723,16 @@ function importJwk(jwk) {
 }
 exports.importJwk = importJwk;
 function jwkToPem(jwk, opts = {}) {
-    let str = btoa(JSON.stringify(jwk)).replace(/(.{64})/gm, '$1\n').replace(/\s$/, '');
-    let type = opts.private ? 'PRIVATE ' : (opts.hmac ? '' : 'PUBLIC ');
+    const str = Buffer.from(JSON.stringify(jwk), 'binary').toString('base64').replace(/(.{64})/gm, '$1\n').replace(/\s$/, '');
+    const type = opts.private ? 'PRIVATE ' : (opts.hmac ? '' : 'PUBLIC ');
     return `-----BEGIN ${type}KEY-----
 ${str}
 -----END ${type}KEY-----`;
 }
 exports.jwkToPem = jwkToPem;
 function pemToJwk(pem) {
-    let jwkStr = atob(pem.replace(/-----(BEGIN|END)(.*)-----/g, '').replace(/\s/g, ''));
-    //console.log('JWKSTR', jwkStr)
+    const jwkStr = Buffer.from(pem.replace(/-----(BEGIN|END)(.*)-----/g, '').replace(/\s/g, ''), 'base64').toString('binary');
+    // console.log('JWKSTR', jwkStr)
     let jwk;
     try {
         jwk = JSON.parse(jwkStr);
