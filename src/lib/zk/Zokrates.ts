@@ -3,10 +3,10 @@ import Rest from "../rest/Rest";
 import axios from 'axios';
 import {promisify} from 'util';
 import * as stream from 'stream';
+import path from 'path';
+import {constants as fsConstants, promises as fs} from 'fs';
 
 const exec = require("child_process").execSync;
-const path = require('path');
-const fs = require("fs-extra");
 let dir = path.dirname(__dirname);
 
 
@@ -15,9 +15,11 @@ export class Zokrates {
     private readonly _apiKey: string;
     private readonly _clientId: string;
     private readonly _token: string;
+
     private _execPath: any;
     private _libRoot: string;
     private _zokRoot: string;
+    private _optionsPath: string
     private _storePath: string;
     private _rest: Rest;
 
@@ -29,14 +31,12 @@ export class Zokrates {
         this._apiKey = apiKey;
         this._clientId = clientId;
         this._token = token;
-
-        this.setPaths(options.path)
-
-
+        this._optionsPath = options.path
     }
 
     async setup() {
-        if (!this.filesExist()) {
+        await this.setPaths(this._optionsPath)
+        if (!await this.filesExist()) {
             await this.getZkFiles(() => {
                 const fields = this.getZkFields();
                 this.computeWitness(fields[0], fields[1], fields[2], fields[3]);
@@ -44,8 +44,16 @@ export class Zokrates {
         }
     }
 
-    filesExist() {
-        return fs.existsSync(`${this._storePath}${path.sep}out`) && fs.existsSync(`${this._storePath}${path.sep}proving.key`);
+    async filesExist() {
+        try {
+            await fs.access(`${this._storePath}${path.sep}out`, fsConstants.F_OK)
+            await fs.access(`${this._storePath}${path.sep}proving.key`, fsConstants.F_OK)
+            return true
+        } catch (e) {
+            console.log('error:', e)
+            return false
+        }
+        // return fs.existsSync(`${this._storePath}${path.sep}out`) && fs.existsSync(`${this._storePath}${path.sep}proving.key`);
     }
 
     private getZkFiles(callback: Function) {
@@ -66,7 +74,9 @@ export class Zokrates {
                         url: proovingPoint,
                         responseType: 'stream',
                     })
-                    const proovingwriter = fs.createWriteStream(`${this._storePath}${path.sep}proving.key`);
+                    const provingFd = await fs.open(`${this._storePath}${path.sep}proving.key`, 'r')
+                    const proovingwriter = provingFd.createReadStream()
+                    // const proovingwriter = fs.createWriteStream(`${this._storePath}${path.sep}proving.key`);
                     const totalLengthP = parseInt(prooving.headers['content-length'], 10);
                     prooving.data.on('data', (chunk: any) => {
                         proofDownloadedBytes += chunk.length;
@@ -90,7 +100,9 @@ export class Zokrates {
                         responseType: 'stream',
                     })
                     const totalLength = parseInt(out.headers['content-length'], 10);
-                    const outwriter = fs.createWriteStream(`${this._storePath}${path.sep}out`);
+                    const outFd = await fs.open(`${this._storePath}${path.sep}out`, 'r')
+                    const outwriter = outFd.createReadStream()
+                    // const outwriter = fs.createWriteStream(`${this._storePath}${path.sep}out`);
                     out.data.on('data', (chunk: any) => {
                         outDownloadedBytes += chunk.length;
                         const prevPercent = outDownloadPercent;
@@ -115,10 +127,11 @@ export class Zokrates {
 
     }
 
-    private setPaths(_storePath: string) {
+    private async setPaths(_storePath: string) {
         const os = process.platform;
         const match = dir.match(/dist/);
-        fs.ensureDirSync(_storePath);
+        await fs.mkdir(_storePath, {recursive: true})
+        // fs.ensureDirSync(_storePath);
         if (!match) {
             this._libRoot = dir + path.sep + 'zokrates';
         } else {
@@ -137,7 +150,8 @@ export class Zokrates {
         } else {
             this._execPath = this._execPath + path.sep + 'zokrates ';
         }
-        fs.ensureDirSync(this._libRoot);
+        await fs.mkdir(this._libRoot, {recursive: true})
+        // fs.ensureDirSync(this._libRoot);
         this._storePath = _storePath;
     }
 
@@ -162,7 +176,7 @@ export class Zokrates {
         const command = `${this._execPath} generate-proof --input=${this._storePath}${path.sep}out --proving-key-path=${this._storePath}${path.sep}proving.key --witness=${this._storePath}${path.sep}witness --proof-path=${this._storePath}${path.sep}proof.json`;
         const compiled = this.run(command);
         if (!compiled.error) {
-            return fs.readJsonSync(`${this._storePath}${path.sep}proof.json`);
+            return require(`${this._storePath}${path.sep}proof.json`)
         }
         console.error('Unable to generate proof:', compiled.error);
         return false;

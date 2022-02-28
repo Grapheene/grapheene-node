@@ -19,7 +19,7 @@ const KMF_1 = require("./kmf/KMF");
 const Storage_1 = require("./storage/Storage");
 const DatabaseGenerator_1 = require("./DatabaseGenerator");
 const Rest_1 = __importDefault(require("./rest/Rest"));
-const fs = require('fs-extra');
+const fs_1 = require("fs");
 const path = require('path');
 const config = require('../../config.json');
 const node_modules = `${__dirname}${path.sep}node_modules`;
@@ -30,12 +30,6 @@ const defaults = {
         migrate: false
     }
 };
-if (fs.existsSync(node_modules + '/.prisma/client/package.json')) {
-    fs.unlinkSync(node_modules + '/.prisma/client/package.json');
-}
-if (fs.existsSync(node_modules + '/.prisma/client/schema.prisma')) {
-    fs.unlinkSync(node_modules + '/.prisma/client/schema.prisma');
-}
 class Grapheene {
     constructor(clientId, apiKey, token, opts) {
         this._options = Object.assign({}, defaults, opts);
@@ -58,18 +52,41 @@ class Grapheene {
         this.cryptoDir = this.filesDir + path.sep + 'encrypt';
         this.dbDir = this.filesDir + path.sep + 'db';
         this.authDir = this.filesDir + path.sep + 'auth';
-        this.ensureDirExist();
     }
     ensureDirExist() {
-        fs.ensureDirSync(this.filesDir);
-        fs.ensureDirSync(this.zkDir);
-        fs.ensureDirSync(this.cryptoDir);
-        fs.ensureDirSync(this.dbDir);
-        fs.ensureDirSync(this.authDir);
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield fs_1.promises.mkdir(this.filesDir, { recursive: true });
+                yield fs_1.promises.mkdir(this.zkDir, { recursive: true });
+                yield fs_1.promises.mkdir(this.cryptoDir, { recursive: true });
+                yield fs_1.promises.mkdir(this.dbDir, { recursive: true });
+                yield fs_1.promises.mkdir(this.authDir, { recursive: true });
+            }
+            catch (err) {
+                console.error('Unable to create necessary folder:', err);
+            }
+        });
     }
     setup() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                yield this.ensureDirExist();
+                try {
+                    const pkgJson = `${node_modules}/.prisma/client/package.json`;
+                    yield fs_1.promises.access(pkgJson, fs_1.constants.F_OK);
+                    yield fs_1.promises.unlink(pkgJson);
+                }
+                catch (e) {
+                    // do nothing
+                }
+                try {
+                    const schemaFile = `${node_modules}/.prisma/client/schema.prisma`;
+                    yield fs_1.promises.access(schemaFile, fs_1.constants.F_OK);
+                    yield fs_1.promises.unlink(schemaFile);
+                }
+                catch (e) {
+                    // do nothing
+                }
                 this.zk = new Zokrates_1.Zokrates(this.clientId, this.apiKey, this.token, {
                     path: this.zkDir,
                     rest: new Rest_1.default(config.baseUrl)

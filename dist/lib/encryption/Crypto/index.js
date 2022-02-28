@@ -27,12 +27,15 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getPublicJwk = exports.pemToJwk = exports.jwkToPem = exports.importJwk = exports.exportJwk = exports.hmacSign = exports.generateEncryptedKey = exports.decryptFileStream = exports.encryptFileStream = exports.encryptFile = exports.decryptFile = exports.encryptHex = exports.encrypt = exports.decrypt = exports.generateRandomString = exports.hexToBytes = exports.bytesToHex = exports.ab2str = exports.str2ab = exports.HMAC = exports.ECDHKeyPair = exports.AESKey = void 0;
 const crypto = __importStar(require("crypto"));
+const fs_1 = require("fs");
+const path_1 = __importDefault(require("path"));
 const FileReader = require('filereader');
-const fs = require("fs-extra");
-const path = require("path");
 let webcrypto, CryptoKeyInstance;
 if (typeof window === "undefined") {
     webcrypto = require('crypto').webcrypto;
@@ -179,12 +182,14 @@ class AESKey {
     }
     encryptFileStream(filePath) {
         return __awaiter(this, void 0, void 0, function* () {
-            const sp = filePath.split(path.sep);
-            const fileName = sp[sp.length - 1];
-            const outPath = filePath.replace(fileName, `enc_${fileName}`);
-            const rs = fs.createReadStream(filePath);
-            const of = fs.createWriteStream(outPath);
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                const sp = filePath.split(path_1.default.sep);
+                const fileName = sp[sp.length - 1];
+                const outPath = filePath.replace(fileName, `enc_${fileName}`);
+                const fd = yield fs_1.promises.open(filePath, 'r');
+                const rs = fd.createReadStream();
+                const od = yield fs_1.promises.open(outPath, 'w');
+                const of = od.createWriteStream();
                 rs.on('open', () => {
                     console.log('File successfully opened');
                 });
@@ -198,28 +203,35 @@ class AESKey {
                     console.log('File successfully closed');
                 });
                 rs.on('end', function () {
-                    let s = this;
-                    fs.unlinkSync(filePath);
-                    fs.rename(outPath, filePath)
-                        .then(() => {
-                        s.destroy();
-                        resolve(true);
+                    return __awaiter(this, void 0, void 0, function* () {
+                        yield fs_1.promises.unlink(filePath);
+                        yield fs_1.promises.rename(outPath, filePath);
+                        this.destroy();
+                        return resolve(true);
+                        // fs.unlinkSync(filePath);
+                        // fs.rename(outPath, filePath)
+                        //     .then(() => {
+                        //         s.destroy();
+                        //         resolve(true)
+                        //     })
                     });
                 });
                 rs.on('error', (err) => {
                     reject(err.message);
                 });
-            });
+            }));
         });
     }
     decryptFileStream(filePath) {
         return __awaiter(this, void 0, void 0, function* () {
-            const sp = filePath.split(path.sep);
-            const fileName = sp[sp.length - 1];
-            const outPath = filePath.replace(fileName, `denc_${fileName}`);
-            const rs = fs.createReadStream(filePath);
-            const of = fs.createWriteStream(outPath);
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                const sp = filePath.split(path_1.default.sep);
+                const fileName = sp[sp.length - 1];
+                const outPath = filePath.replace(fileName, `denc_${fileName}`);
+                const fd = yield fs_1.promises.open(filePath, 'r');
+                const rs = fd.createReadStream();
+                const od = yield fs_1.promises.open(outPath, 'w');
+                const of = od.createWriteStream();
                 rs.on('open', () => {
                     console.log('File successfully opened');
                 });
@@ -233,18 +245,24 @@ class AESKey {
                     console.log('File successfully closed');
                 });
                 rs.on('end', function () {
-                    let s = this;
-                    fs.unlinkSync(filePath);
-                    fs.rename(outPath, filePath)
-                        .then(() => {
-                        s.destroy();
-                        resolve(true);
+                    return __awaiter(this, void 0, void 0, function* () {
+                        yield fs_1.promises.unlink(filePath);
+                        yield fs_1.promises.rename(outPath, filePath);
+                        this.destroy();
+                        return resolve(true);
+                        // let s = this;
+                        // fs.unlinkSync(filePath);
+                        // fs.rename(outPath, filePath)
+                        //     .then(() => {
+                        //         s.destroy();
+                        //         resolve(true)
+                        //     })
                     });
                 });
                 rs.on('error', (err) => {
                     reject(err.message);
                 });
-            });
+            }));
         });
     }
     encryptFile(file) {

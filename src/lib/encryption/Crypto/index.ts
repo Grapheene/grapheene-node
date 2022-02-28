@@ -1,8 +1,8 @@
 import * as crypto from "crypto";
+import {promises as fs} from 'fs';
+import path from 'path';
 
 const FileReader = require('filereader');
-const fs = require("fs-extra")
-const path = require("path")
 
 let webcrypto: any, CryptoKeyInstance: any;
 
@@ -163,19 +163,21 @@ export class AESKey {
     }
 
     async encryptFileStream(filePath: string) {
-        const sp = filePath.split(path.sep);
-        const fileName = sp[sp.length - 1];
-        const outPath = filePath.replace(fileName, `enc_${fileName}`);
-        const rs = fs.createReadStream(filePath);
-        const of = fs.createWriteStream(outPath);
-        return new Promise((resolve, reject) => {
+        return new Promise(async (resolve, reject) => {
+            const sp = filePath.split(path.sep);
+            const fileName = sp[sp.length - 1];
+            const outPath = filePath.replace(fileName, `enc_${fileName}`);
+            const fd = await fs.open(filePath, 'r');
+            const rs = fd.createReadStream();
+            const od = await fs.open(outPath, 'w');
+            const of = od.createWriteStream();
 
             rs.on('open', () => {
                 console.log('File successfully opened')
             })
             rs.on('data', async (chunk: any) => {
                 const encrypted = await this.encrypt(chunk);
-                if(encrypted){
+                if (encrypted) {
                     of.write(encrypted);
                 }
             })
@@ -183,14 +185,18 @@ export class AESKey {
                 console.log('File successfully closed')
             })
 
-            rs.on('end', function () {
-                let s = this;
-                fs.unlinkSync(filePath);
-                fs.rename(outPath, filePath)
-                    .then(() => {
-                        s.destroy();
-                        resolve(true)
-                    })
+            rs.on('end', async function () {
+                await fs.unlink(filePath)
+                await fs.rename(outPath, filePath)
+                this.destroy();
+                return resolve(true);
+
+                // fs.unlinkSync(filePath);
+                // fs.rename(outPath, filePath)
+                //     .then(() => {
+                //         s.destroy();
+                //         resolve(true)
+                //     })
             })
             rs.on('error', (err: Error) => {
                 reject(err.message)
@@ -199,19 +205,20 @@ export class AESKey {
     }
 
     async decryptFileStream(filePath: string) {
-        const sp = filePath.split(path.sep);
-        const fileName = sp[sp.length - 1];
-        const outPath = filePath.replace(fileName, `denc_${fileName}`);
-        const rs = fs.createReadStream(filePath);
-        const of = fs.createWriteStream(outPath);
-        return new Promise((resolve, reject) => {
-
+        return new Promise(async (resolve, reject) => {
+            const sp = filePath.split(path.sep);
+            const fileName = sp[sp.length - 1];
+            const outPath = filePath.replace(fileName, `denc_${fileName}`);
+            const fd = await fs.open(filePath, 'r');
+            const rs = fd.createReadStream();
+            const od = await fs.open(outPath, 'w');
+            const of = od.createWriteStream();
             rs.on('open', () => {
                 console.log('File successfully opened')
             })
             rs.on('data', async (chunk: any) => {
                 const decrypted = await this.decrypt(chunk);
-                if(decrypted){
+                if (decrypted) {
                     of.write(decrypted);
                 }
             })
@@ -219,14 +226,19 @@ export class AESKey {
                 console.log('File successfully closed')
             })
 
-            rs.on('end', function () {
-                let s = this;
-                fs.unlinkSync(filePath);
-                fs.rename(outPath, filePath)
-                    .then(() => {
-                        s.destroy();
-                        resolve(true)
-                    })
+            rs.on('end', async function () {
+                await fs.unlink(filePath)
+                await fs.rename(outPath, filePath)
+                this.destroy();
+                return resolve(true);
+
+                // let s = this;
+                // fs.unlinkSync(filePath);
+                // fs.rename(outPath, filePath)
+                //     .then(() => {
+                //         s.destroy();
+                //         resolve(true)
+                //     })
             })
             rs.on('error', (err: Error) => {
                 reject(err.message)

@@ -15,9 +15,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.TokenManager = void 0;
 const EventFactory_1 = __importDefault(require("./EventFactory"));
 const Rest_1 = __importDefault(require("./rest/Rest"));
+const fs_1 = require("fs");
 const config = require('../../config.json');
 const jwt = require('jsonwebtoken');
-const fs = require('fs-extra');
 const e = (0, EventFactory_1.default)();
 class TokenManager {
     constructor(clientId, options) {
@@ -26,9 +26,16 @@ class TokenManager {
         this._proof = options.proof;
         this._onUpdate = options.onUpdate;
         this._authDir = options.authDir;
-        fs.ensureDirSync(this._authDir);
-        this._restClient = new Rest_1.default(config.baseUrl);
-        this.loadToken(this._clientId, this._proof);
+        (() => __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield fs_1.promises.mkdir(this._authDir, { recursive: true });
+            }
+            catch (err) {
+                console.error('Unable to create TokenManager authDir:', err);
+            }
+            this._restClient = new Rest_1.default(config.baseUrl);
+            yield this.loadToken(this._clientId, this._proof);
+        }))();
         e.on('refreshToken', () => {
             this.auth(this._clientId, this._proof);
         });
@@ -39,49 +46,95 @@ class TokenManager {
         });
     }
     loadToken(clientId, proof) {
-        if (fs.existsSync(this._authDir + '/token') && fs.existsSync(this._authDir + '/rsa')) {
-            const token = fs.readFileSync(this._authDir + '/token', 'utf8');
-            const rsa = fs.readFileSync(this._authDir + '/rsa', 'utf8');
-            jwt.verify(token, rsa, { algorithms: ['RS256'] }, (err, decoded) => {
-                if (err) {
-                    if (err.message === 'jwt expired') {
-                        console.log('Refreshing JWT...');
-                        e.emit('refreshToken');
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const tokenFile = `${this._authDir}/token`;
+                const rsaFile = `${this._authDir}/rsa`;
+                yield fs_1.promises.access(tokenFile, fs_1.constants.F_OK);
+                yield fs_1.promises.access(rsaFile, fs_1.constants.F_OK);
+                const token = yield fs_1.promises.readFile(tokenFile, 'utf8');
+                const rsa = yield fs_1.promises.readFile(rsaFile, 'utf8');
+                jwt.verify(token, rsa, { algorithms: ['RS256'] }, (err, decoded) => {
+                    if (err) {
+                        if (err.message === 'jwt expired') {
+                            console.log('Refreshing JWT...');
+                            e.emit('refreshToken');
+                        }
+                        else {
+                            console.error('Unable to verify token:', err.message);
+                        }
                     }
                     else {
-                        console.error('Unable to verify token:', err.message);
+                        const unixtime = Math.floor(+new Date() / 1000);
+                        if (decoded.exp - unixtime <= 300) {
+                            e.emit('refreshToken');
+                        }
+                        else {
+                            this._token = token;
+                            this._rsa = rsa;
+                            this._onUpdate({ Token: this._token, Key: this._rsa });
+                            this.ready = true;
+                        }
                     }
-                }
-                else {
-                    const unixtime = Math.floor(+new Date() / 1000);
-                    if (decoded.exp - unixtime <= 300) {
-                        e.emit('refreshToken');
-                    }
-                    else {
-                        this._token = token;
-                        this._rsa = rsa;
-                        this._onUpdate({ Token: this._token, Key: this._rsa });
-                        this.ready = true;
-                    }
-                }
-            });
-        }
-        else {
-            this.getToken(clientId, proof).then(() => {
-                this.ready = true;
-            });
-        }
+                });
+            }
+            catch (e) {
+                // ignore error
+                this.getToken(clientId, proof).then(() => {
+                    this.ready = true;
+                });
+            }
+            //
+            //
+            // if (fs.existsSync(this._authDir + '/token') && fs.existsSync(this._authDir + '/rsa')) {
+            //     const token = fs.readFileSync(this._authDir + '/token', 'utf8')
+            //     const rsa = fs.readFileSync(this._authDir + '/rsa', 'utf8')
+            //
+            //     jwt.verify(token, rsa, {algorithms: ['RS256']}, (err: Error, decoded: any) => {
+            //
+            //         if (err) {
+            //             if (err.message === 'jwt expired') {
+            //                 console.log('Refreshing JWT...')
+            //                 e.emit('refreshToken')
+            //             } else {
+            //                 console.error('Unable to verify token:', err.message)
+            //             }
+            //         } else {
+            //             const unixtime = Math.floor(+new Date() / 1000)
+            //             if (decoded.exp - unixtime <= 300) {
+            //                 e.emit('refreshToken')
+            //             } else {
+            //                 this._token = token;
+            //                 this._rsa = rsa;
+            //                 this._onUpdate({Token: this._token, Key: this._rsa})
+            //                 this.ready = true;
+            //             }
+            //         }
+            //
+            //     });
+            // } else {
+            //     this.getToken(clientId, proof).then(() => {
+            //         this.ready = true;
+            //     })
+            //
+            // }
+        });
     }
     getToken(clientId, proof) {
         return __awaiter(this, void 0, void 0, function* () {
-            const result = yield this._restClient.post('/auth', { uuid: clientId, proof: proof });
-            this._token = result.data.token;
-            this._rsa = result.data.publicKey;
-            fs.writeFileSync(this._authDir + '/token', this._token);
-            fs.writeFileSync(this._authDir + '/rsa', this._rsa);
-            this._onUpdate({ Token: this._token, Key: this._rsa });
-            this.watch();
-            return result;
+            try {
+                const result = yield this._restClient.post('/auth', { uuid: clientId, proof: proof });
+                this._token = result.data.token;
+                this._rsa = result.data.publicKey;
+                yield fs_1.promises.writeFile(`${this._authDir}/token`, this._token);
+                yield fs_1.promises.writeFile(`${this._authDir}/rsa`, this._rsa);
+                this._onUpdate({ Token: this._token, Key: this._rsa });
+                this.watch();
+                return result;
+            }
+            catch (err) {
+                console.error('Unable to get token:', err);
+            }
         });
     }
     auth(clientId, proof) {

@@ -7,7 +7,7 @@ import {DatabaseGenerator} from './DatabaseGenerator';
 import {GrapheeneOptions} from "../../index";
 import Rest from "./rest/Rest";
 
-const fs = require('fs-extra');
+import {constants as fsConstants, promises as fs} from 'fs';
 const path = require('path');
 const config = require('../../config.json')
 const node_modules = `${__dirname}${path.sep}node_modules`;
@@ -19,16 +19,7 @@ const defaults = {
     }
 }
 
-if (fs.existsSync(node_modules + '/.prisma/client/package.json')) {
-    fs.unlinkSync(node_modules + '/.prisma/client/package.json')
-}
-if (fs.existsSync(node_modules + '/.prisma/client/schema.prisma')) {
-    fs.unlinkSync(node_modules + '/.prisma/client/schema.prisma')
-}
-
-
 export class Grapheene {
-
     private readonly clientId: string;
     private readonly apiKey: string;
     private readonly token: string;
@@ -69,20 +60,40 @@ export class Grapheene {
         this.cryptoDir = this.filesDir + path.sep + 'encrypt';
         this.dbDir = this.filesDir + path.sep + 'db';
         this.authDir = this.filesDir + path.sep + 'auth';
-
-        this.ensureDirExist()
     }
 
-    private ensureDirExist() {
-        fs.ensureDirSync(this.filesDir)
-        fs.ensureDirSync(this.zkDir)
-        fs.ensureDirSync(this.cryptoDir)
-        fs.ensureDirSync(this.dbDir)
-        fs.ensureDirSync(this.authDir)
+    private async ensureDirExist() {
+        try {
+            await fs.mkdir(this.filesDir, {recursive: true})
+            await fs.mkdir(this.zkDir, {recursive: true})
+            await fs.mkdir(this.cryptoDir, {recursive: true})
+            await fs.mkdir(this.dbDir, {recursive: true})
+            await fs.mkdir(this.authDir, {recursive: true})
+        } catch (err) {
+            console.error('Unable to create necessary folder:', err);
+        }
     }
 
     async setup() {
         try {
+            await this.ensureDirExist()
+
+            try {
+                const pkgJson = `${node_modules}/.prisma/client/package.json`;
+                await fs.access(pkgJson, fsConstants.F_OK);
+                await fs.unlink(pkgJson);
+            } catch (e) {
+                // do nothing
+            }
+
+            try {
+                const schemaFile = `${node_modules}/.prisma/client/schema.prisma`;
+                await fs.access(schemaFile, fsConstants.F_OK);
+                await fs.unlink(schemaFile);
+            } catch (e) {
+                // do nothing
+            }
+
             this.zk = new Zokrates(this.clientId, this.apiKey, this.token, {
                 path: this.zkDir,
                 rest: new Rest(config.baseUrl)
