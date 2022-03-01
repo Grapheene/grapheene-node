@@ -26,19 +26,21 @@ class TokenManager {
         this._proof = options.proof;
         this._onUpdate = options.onUpdate;
         this._authDir = options.authDir;
-        (() => __awaiter(this, void 0, void 0, function* () {
-            try {
-                yield fs_1.promises.mkdir(this._authDir, { recursive: true });
-            }
-            catch (err) {
-                console.error('Unable to create TokenManager authDir:', err);
-            }
-            this._restClient = new Rest_1.default(config.baseUrl);
-            yield this.loadToken(this._clientId, this._proof);
-        }))();
         e.on('refreshToken', () => {
             this.auth(this._clientId, this._proof);
         });
+        return (() => __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield fs_1.promises.mkdir(this._authDir, { recursive: true });
+                this._restClient = new Rest_1.default(config.baseUrl);
+                yield this.loadToken(this._clientId, this._proof);
+                return this;
+            }
+            catch (err) {
+                console.error('Unable to create TokenManager authDir:', err);
+                return false;
+            }
+        }))();
     }
     getAuth(proof) {
         return __awaiter(this, void 0, void 0, function* () {

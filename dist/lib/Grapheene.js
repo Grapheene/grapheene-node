@@ -92,7 +92,7 @@ class Grapheene {
                     rest: new Rest_1.default(config.baseUrl)
                 });
                 yield this.zk.setup();
-                this._restClient = new AuthorizedRest_1.default(config.baseUrl, this.clientId, this.zk, this.authDir);
+                this._restClient = yield new AuthorizedRest_1.default(config.baseUrl, this.clientId, this.zk, this.authDir);
                 yield this.setupDb();
                 this.setupKMS();
                 this.setupStorage();

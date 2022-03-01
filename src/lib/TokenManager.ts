@@ -2,7 +2,6 @@ import createEmitter from "./EventFactory";
 import {TokenManagerOptions} from "../../index";
 import Rest from "./rest/Rest";
 import {constants as fsConstants, promises as fs} from 'fs';
-import {AxiosResponse} from "axios";
 
 const config = require('../../config.json')
 const jwt = require('jsonwebtoken')
@@ -18,27 +17,29 @@ export class TokenManager {
     private _rsa: string;
     private interval: any;
     private _restClient: Rest;
-    ready: boolean = false;
+    ready: boolean = false
 
     constructor(clientId: string, options: TokenManagerOptions) {
         this._clientId = clientId;
         this._proof = options.proof;
         this._onUpdate = options.onUpdate;
         this._authDir = options.authDir;
-        (async () => {
-            try {
-                await fs.mkdir(this._authDir, {recursive: true})
-            } catch (err) {
-                console.error('Unable to create TokenManager authDir:', err);
-            }
 
-            this._restClient = new Rest(config.baseUrl);
-            await this.loadToken(this._clientId, this._proof);
-        })();
         e.on('refreshToken', () => {
             this.auth(this._clientId, this._proof)
         });
 
+        return (async () => {
+            try {
+                await fs.mkdir(this._authDir, {recursive: true})
+                this._restClient = new Rest(config.baseUrl);
+                await this.loadToken(this._clientId, this._proof);
+                return this
+            } catch (err) {
+                console.error('Unable to create TokenManager authDir:', err);
+                return false
+            }
+        })() as unknown as TokenManager;
     }
 
     async getAuth(proof: string) {

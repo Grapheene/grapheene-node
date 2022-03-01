@@ -54,19 +54,19 @@ ${postfix}`;
         }
         else if (dbUri.match(/^mongodb/)) {
             yield fs_1.promises.copyFile(`${prismaDir}/schemas/mongo.prisma`, `${prismaDir}/schema.prisma`);
-            yield run('prisma generate');
+            yield run(`${node_modules}${sep}prisma${sep}build${sep}index.js generate --schema "${prismaDir}/schema.prisma"`);
         }
         else if (dbUri.match(/^post/)) {
             yield fs_1.promises.copyFile(`${prismaDir}/schemas/postgres.prisma`, `${prismaDir}/schema.prisma`);
-            yield run('prisma generate --schema ' + prismaDir + '/schema.prisma');
+            yield run(`${node_modules}${sep}prisma${sep}build${sep}index.js generate --schema "${prismaDir}/schema.prisma"`);
             try {
                 yield fs_1.promises.access(`${prismaDir}/migrations`, fs_1.constants.F_OK);
             }
             catch (e) {
                 // Migrations don't exist, run them
                 if (options.db.migrate) {
-                    yield run('prisma migrate dev --name init --schema ' + prismaDir + '/schema.prisma');
-                    yield run('prisma migrate deploy --schema ' + prismaDir + '/schema.prisma');
+                    yield run(`${node_modules}${sep}prisma${sep}build${sep}index.js  migrate dev --name init --schema "${prismaDir}/schema.prisma"`);
+                    yield run(`${node_modules}${sep}prisma${sep}build${sep}index.js  migrate deploy --schema "${prismaDir}/schema.prisma"`);
                 }
             }
         }
