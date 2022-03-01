@@ -104,8 +104,6 @@ export class Storage {
             try {
                 await fs.mkdir(filePath, {recursive: true})
                 await fs.writeFile(filePath + path.sep + fileName, data);
-                // fs.ensureDirSync(filePath)
-                // fs.writeFileSync(filePath + path.sep + fileName, data)
                 resolve(true)
             } catch (e) {
                 reject(e)
@@ -120,7 +118,6 @@ export class Storage {
                 const fd = await fs.open(keyRingData.path, 'r')
                 const params = {
                     file: fd.createReadStream(),
-                    // file: fs.createReadStream(keyRingData.path),
                     size: stats.size
                 }
 

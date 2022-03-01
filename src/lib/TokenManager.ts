@@ -10,7 +10,6 @@ const jwt = require('jsonwebtoken')
 const e = createEmitter();
 
 export class TokenManager {
-
     private readonly _clientId: string;
     private readonly _onUpdate: Function;
     private readonly _authDir: string;
@@ -84,40 +83,6 @@ export class TokenManager {
                 this.ready = true
             })
         }
-        //
-        //
-        // if (fs.existsSync(this._authDir + '/token') && fs.existsSync(this._authDir + '/rsa')) {
-        //     const token = fs.readFileSync(this._authDir + '/token', 'utf8')
-        //     const rsa = fs.readFileSync(this._authDir + '/rsa', 'utf8')
-        //
-        //     jwt.verify(token, rsa, {algorithms: ['RS256']}, (err: Error, decoded: any) => {
-        //
-        //         if (err) {
-        //             if (err.message === 'jwt expired') {
-        //                 console.log('Refreshing JWT...')
-        //                 e.emit('refreshToken')
-        //             } else {
-        //                 console.error('Unable to verify token:', err.message)
-        //             }
-        //         } else {
-        //             const unixtime = Math.floor(+new Date() / 1000)
-        //             if (decoded.exp - unixtime <= 300) {
-        //                 e.emit('refreshToken')
-        //             } else {
-        //                 this._token = token;
-        //                 this._rsa = rsa;
-        //                 this._onUpdate({Token: this._token, Key: this._rsa})
-        //                 this.ready = true;
-        //             }
-        //         }
-        //
-        //     });
-        // } else {
-        //     this.getToken(clientId, proof).then(() => {
-        //         this.ready = true;
-        //     })
-        //
-        // }
     }
 
     private async getToken(clientId: string, proof: string) {
@@ -142,7 +107,6 @@ export class TokenManager {
         clearInterval(this.interval);
         this.getToken(clientId, proof);
     }
-
 
     private watch() {
         this.interval = setInterval(() => {
@@ -180,6 +144,4 @@ export class TokenManager {
     get jwt() {
         return this._token;
     }
-
-
 }

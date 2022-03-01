@@ -188,13 +188,6 @@ export class AESKey {
                 await fs.rename(outPath, filePath)
                 this.destroy();
                 return resolve(true);
-
-                // fs.unlinkSync(filePath);
-                // fs.rename(outPath, filePath)
-                //     .then(() => {
-                //         s.destroy();
-                //         resolve(true)
-                //     })
             })
             rs.on('error', (err: Error) => {
                 reject(err.message)
@@ -229,14 +222,6 @@ export class AESKey {
                 await fs.rename(outPath, filePath)
                 this.destroy();
                 return resolve(true);
-
-                // let s = this;
-                // fs.unlinkSync(filePath);
-                // fs.rename(outPath, filePath)
-                //     .then(() => {
-                //         s.destroy();
-                //         resolve(true)
-                //     })
             })
             rs.on('error', (err: Error) => {
                 reject(err.message)
