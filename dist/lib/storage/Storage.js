@@ -48,12 +48,15 @@ class Storage {
             }
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
                 try {
+                    console.log('yo', this._medium, keyRingData.path);
                     if (this._medium === "local" && keyRingData.path === 'in:memory') {
                         if (typeof options === 'undefined' || !options.path) {
-                            reject("filepath is required for data");
+                            throw new Error("Filepath is required for data");
                         }
+                        console.log('about to split');
                         const sp = options.path.split(path_1.default.sep);
                         if (typeof options === 'undefined' || !options.name) {
+                            console.log('about to savelocal');
                             yield this.saveLocal(options.path, sp[sp.length - 1], keyRingData.encrypted);
                         }
                         resolve(yield this._kmf.ring.updateData({ uuid: keyRingData.uuid, path: options.path, name: sp[sp.length - 1], service: this._medium }));
@@ -96,13 +99,16 @@ class Storage {
     saveLocal(filePath, fileName, data) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             try {
+                console.log('about to mkdir');
                 yield fs_1.promises.mkdir(filePath, { recursive: true });
+                console.log('about to writeFile');
                 yield fs_1.promises.writeFile(filePath + path_1.default.sep + fileName, data);
                 // fs.ensureDirSync(filePath)
                 // fs.writeFileSync(filePath + path.sep + fileName, data)
                 resolve(true);
             }
             catch (e) {
+                console.error('failed to save');
                 reject(e);
             }
         }));

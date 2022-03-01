@@ -53,6 +53,7 @@ class Rest {
             config.data = params;
         }
         if (config.method === 'form') {
+            console.log('submitting a form');
             const bodyFormData = new FormData();
             for (let x in params) {
                 bodyFormData.append(x, params[x]);

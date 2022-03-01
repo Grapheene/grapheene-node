@@ -50,15 +50,13 @@ export class Storage {
             try {
                 if (this._medium === "local" && keyRingData.path === 'in:memory') {
                     if (typeof options === 'undefined' || !options.path) {
-                        reject("filepath is required for data")
+                        throw new Error("Filepath is required for data")
                     }
                     const sp = options.path.split(path.sep);
                     if(typeof options === 'undefined' || !options.name){
-
                         await this.saveLocal(options.path, sp[sp.length - 1], keyRingData.encrypted)
                     }
                     resolve(await this._kmf.ring.updateData({uuid: keyRingData.uuid,path: options.path, name: sp[sp.length - 1], service: this._medium}));
-
                 }
 
                 if(typeof options !== 'undefined' && options.path){
@@ -116,7 +114,6 @@ export class Storage {
     }
 
     private saveCloud(keyRingData: KeyRingData) {
-
         return new Promise(async (resolve, reject) => {
             try {
                 const stats = await fs.stat(keyRingData.path);

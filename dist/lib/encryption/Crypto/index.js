@@ -35,7 +35,6 @@ exports.getPublicJwk = exports.pemToJwk = exports.jwkToPem = exports.importJwk =
 const crypto = __importStar(require("crypto"));
 const fs_1 = require("fs");
 const path_1 = __importDefault(require("path"));
-// const FileReader = require('filereader');
 let webcrypto, CryptoKeyInstance;
 if (typeof window === "undefined") {
     webcrypto = require('crypto').webcrypto;
@@ -267,7 +266,6 @@ class AESKey {
     }
     encryptFile(file) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log('encryptFile');
             return new Promise((resolve) => __awaiter(this, void 0, void 0, function* () {
                 try {
                     const fileData = yield fs_1.promises.readFile(file, 'utf8');
@@ -303,41 +301,10 @@ class AESKey {
                     console.error('Unable to encrypt:', err);
                 }
             }));
-            // const fr: any = new FileReader()
-            // return new Promise(resolve => {
-            //     fr.onloadstart = async () => {
-            //         console.log('Loading file...')
-            //     }
-            //     fr.onload = async () => {
-            //         const salt = webcrypto.getRandomValues(new Uint8Array(16))
-            //         const derivedKey = await this.deriveEncryptionSecretKey(salt)
-            //         const iv = webcrypto.getRandomValues(new Uint8Array(16))
-            //         const content = new Uint8Array(fr.result)
-            //         webcrypto.subtle.encrypt({
-            //             iv,
-            //             name: 'AES-GCM'
-            //         }, derivedKey, content)
-            //             .then((encrypted: any) => {
-            //                 const encryptedContent = new Uint8Array(encrypted)
-            //                 const blob = new Blob([iv, salt, encryptedContent], {type: 'application/octet-stream'})
-            //                 const encFile = new File([blob], 'encryptedFile', {
-            //                     lastModified: file.lastModified,
-            //                     type: file.type
-            //                 })
-            //                 resolve([encFile, content])
-            //             })
-            //             .catch((err: Error) => {
-            //                 console.error('Unable to encrypt:', err)
-            //                 resolve(null)
-            //             })
-            //     }
-            //     fr.readAsArrayBuffer(file)
-            // })
         });
     }
     decryptFile(file, type) {
         return __awaiter(this, void 0, void 0, function* () {
-            console.log('decryptFile');
             return new Promise((resolve) => __awaiter(this, void 0, void 0, function* () {
                 try {
                     const fileData = yield fs_1.promises.readFile(file, 'utf8');
@@ -372,35 +339,6 @@ class AESKey {
                     console.error('Unable to decrypt:', err);
                 }
             }));
-            // const fr: any = new FileReader()
-            // return new Promise(resolve => {
-            //     fr.onloadstart = async () => {
-            //         console.info('Loading file...')
-            //     }
-            //     fr.onload = async () => {
-            //         const salt = new Uint8Array(fr.result.slice(16, 32))
-            //         const derivedKey = await this.deriveDecryptionSecretKey(salt)
-            //         const iv = new Uint8Array(fr.result.slice(0, 16))
-            //         const content = new Uint8Array(fr.result.slice(32))
-            //         webcrypto.subtle.decrypt({
-            //             iv,
-            //             name: 'AES-GCM'
-            //         }, derivedKey, content)
-            //             .then((decrypted: any) => {
-            //                 let opts: any = {}
-            //                 if (type) {
-            //                     opts.type = type
-            //                 }
-            //                 let blob = new Blob([new Uint8Array(decrypted)], opts)
-            //                 resolve(blob)
-            //             })
-            //             .catch((err: Error) => {
-            //                 console.error("Unable to decrypt:", err)
-            //                 resolve(null)
-            //             })
-            //     }
-            //     fr.readAsArrayBuffer(file)
-            // })
         });
     }
     export() {
