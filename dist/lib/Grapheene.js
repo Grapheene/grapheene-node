@@ -16,15 +16,13 @@ exports.Grapheene = void 0;
 const AuthorizedRest_1 = __importDefault(require("./rest/AuthorizedRest"));
 const Zokrates_1 = require("./zk/Zokrates");
 const KMF_1 = require("./kmf/KMF");
-const sqlite3_1 = require("sqlite3");
 const Storage_1 = require("./storage/Storage");
-const child_process_1 = require("child_process");
+const DatabaseGenerator_1 = require("./DatabaseGenerator");
 const Rest_1 = __importDefault(require("./rest/Rest"));
-const config = require('../../config.json');
-const sqlite = require('sqlite3').verbose();
-const node_modules = require('node_modules-path');
-const fs = require('fs-extra');
+const fs_1 = require("fs");
 const path = require('path');
+const config = require('../../config.json');
+const node_modules = `${__dirname}${path.sep}node_modules`;
 const defaults = {
     medium: 'local',
     dir: './',
@@ -32,12 +30,6 @@ const defaults = {
         migrate: false
     }
 };
-if (fs.existsSync(node_modules() + '/.prisma/client/package.json')) {
-    fs.unlinkSync(node_modules() + '/.prisma/client/package.json');
-}
-if (fs.existsSync(node_modules() + '/.prisma/client/schema.prisma')) {
-    fs.unlinkSync(node_modules() + '/.prisma/client/schema.prisma');
-}
 class Grapheene {
     constructor(clientId, apiKey, token, opts) {
         this._options = Object.assign({}, defaults, opts);
@@ -60,35 +52,48 @@ class Grapheene {
         this.cryptoDir = this.filesDir + path.sep + 'encrypt';
         this.dbDir = this.filesDir + path.sep + 'db';
         this.authDir = this.filesDir + path.sep + 'auth';
-        this.ensureDirExist();
     }
     ensureDirExist() {
-        fs.ensureDirSync(this.filesDir);
-        fs.ensureDirSync(this.zkDir);
-        fs.ensureDirSync(this.cryptoDir);
-        fs.ensureDirSync(this.dbDir);
-        fs.ensureDirSync(this.authDir);
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield fs_1.promises.mkdir(this.filesDir, { recursive: true });
+                yield fs_1.promises.mkdir(this.zkDir, { recursive: true });
+                yield fs_1.promises.mkdir(this.cryptoDir, { recursive: true });
+                yield fs_1.promises.mkdir(this.dbDir, { recursive: true });
+                yield fs_1.promises.mkdir(this.authDir, { recursive: true });
+            }
+            catch (err) {
+                console.error('Unable to create necessary folder:', err);
+            }
+        });
     }
     setup() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
+                yield this.ensureDirExist();
+                try {
+                    const pkgJson = `${node_modules}/.prisma/client/package.json`;
+                    yield fs_1.promises.access(pkgJson, fs_1.constants.F_OK);
+                    yield fs_1.promises.unlink(pkgJson);
+                }
+                catch (e) {
+                    // do nothing
+                }
+                try {
+                    const schemaFile = `${node_modules}/.prisma/client/schema.prisma`;
+                    yield fs_1.promises.access(schemaFile, fs_1.constants.F_OK);
+                    yield fs_1.promises.unlink(schemaFile);
+                }
+                catch (e) {
+                    // do nothing
+                }
                 this.zk = new Zokrates_1.Zokrates(this.clientId, this.apiKey, this.token, {
                     path: this.zkDir,
                     rest: new Rest_1.default(config.baseUrl)
                 });
                 yield this.zk.setup();
-                this._restClient = new AuthorizedRest_1.default(config.baseUrl, this.clientId, this.zk, this.authDir);
-                if (process.env.DATABASE_URL) {
-                    this.setupDb();
-                }
-                else {
-                    this._db = new sqlite.Database(this.dbDir + path.sep + 'grapheene.db', (err) => {
-                        if (err) {
-                            throw new Error(err.message);
-                        }
-                        this.setupDevDb();
-                    });
-                }
+                this._restClient = yield new AuthorizedRest_1.default(config.baseUrl, this.clientId, this.zk, this.authDir);
+                yield this.setupDb();
                 this.setupKMS();
                 this.setupStorage();
                 this._kmf.ring.storage = this._storage;
@@ -100,80 +105,10 @@ class Grapheene {
             }
         });
     }
-    setupDevDb() {
-        let tables = [];
-        if (this._db instanceof sqlite3_1.Database) {
-            this._db.all('SELECT \n' +
-                '    *\n' +
-                'FROM \n' +
-                '    sqlite_master\n' +
-                'WHERE \n' +
-                '    type =\'table\' AND \n' +
-                '    name NOT LIKE \'sqlite_%\'', (err, rows) => {
-                if (err) {
-                    throw new Error(err.message);
-                }
-                for (let x in rows) {
-                    tables.push(rows[x].name);
-                }
-                if (!tables.includes('keystore')) {
-                    // this._db.run('CREATE TABLE keystore (ringUUID TEXT, keyUUID TEXT, keyType TEXT,active INT,  data TEXT)');
-                    if (this._db instanceof sqlite3_1.Database) {
-                        this._db.run('CREATE TABLE keystore (uuid TEXT, active INT,  data TEXT)');
-                    }
-                }
-            });
-        }
-    }
     setupDb() {
-        if (fs.existsSync(this.prismaDir + '/schema.prisma')) {
-            fs.unlinkSync(this.prismaDir + '/schema.prisma');
-        }
-        if (!fs.existsSync(this.prismaDir + '/schema.prisma')) {
-            if (process.env.DATABASE_URL.match(/^mongodb/)) {
-                fs.copyFileSync(this.prismaDir + '/schemas/mongo.prisma', this.prismaDir + '/schema.prisma');
-                this.run('prisma generate');
-            }
-            if (process.env.DATABASE_URL.match(/^post/)) {
-                fs.copyFileSync(this.prismaDir + '/schemas/postgres.prisma', this.prismaDir + '/schema.prisma');
-                this.run('prisma generate --schema ' + this.prismaDir + '/schema.prisma');
-                if (!fs.existsSync(this.prismaDir + '/migrations')) {
-                    if (this._options.db.migrate) {
-                        this.run('prisma migrate dev --name init --schema ' + this.prismaDir + '/schema.prisma');
-                        this.run('prisma migrate deploy --schema ' + this.prismaDir + '/schema.prisma');
-                    }
-                }
-            }
-        }
-        while (!fs.existsSync(node_modules() + '/.prisma/client/schema.prisma')) {
-            process.stdout.write('\rSetting up database...');
-        }
-        process.stdout.write('done!\n');
-        const { PrismaClient } = require('@prisma/client');
-        this._db = new PrismaClient();
-    }
-    run(command, interactive) {
-        let buff;
-        if (!interactive) {
-            buff = (0, child_process_1.execSync)(command);
-        }
-        else {
-            buff = (0, child_process_1.spawnSync)(command);
-        }
-        const result = buff.toString();
-        const retObj = {
-            error: null,
-            result: null
-        };
-        if (result.match(/^error/i)) {
-            retObj.error = result;
-            console.error(`Unable to run ${command}:`, retObj.error);
-            return retObj;
-        }
-        else {
-            retObj.result = result;
-            return retObj;
-        }
+        return __awaiter(this, void 0, void 0, function* () {
+            this._db = (yield (0, DatabaseGenerator_1.DatabaseGenerator)(Object.assign(Object.assign({}, this._options), { dir: this.dbDir })));
+        });
     }
     setupKMS() {
         this.kmf = new KMF_1.KMF(this._restClient, this._db);

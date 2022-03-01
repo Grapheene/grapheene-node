@@ -1,6 +1,6 @@
 {
   "name": "@grapheene/grapheene",
-  "version": "0.0.13",
+  "version": "0.1.0",
   "description": "A Grapheene SDK for NodeJS",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -30,23 +30,13 @@
   "dependencies": {
     "@prisma/client": "^3.8.1",
     "@prisma/migrate": "^3.9.2",
-    "atob": "^2.1.2",
     "axios": "^0.24.0",
-    "btoa": "^1.2.1",
-    "filereader": "^0.10.3",
     "form-data": "^4.0.0",
-    "fs-extra": "^10.0.0",
-    "got": "^12.0.1",
     "jsonwebtoken": "^8.5.1",
-    "node_modules-path": "^2.0.5",
-    "prisma": "^3.9.2",
-    "sqlite3": "^5.0.2",
-    "tsify": "^5.0.4"
+    "prisma": "^3.9.2"
   },
   "devDependencies": {
-    "@types/got": "^9.6.12",
     "@types/node": "^17.0.2",
-    "@types/sqlite3": "^3.1.8",
     "eslint": "^7.7.0",
     "jest": "^27.2.1",
     "ts-jest": "^27.0.5",

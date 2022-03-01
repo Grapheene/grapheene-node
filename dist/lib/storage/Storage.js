@@ -8,10 +8,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Storage = void 0;
-const fs = require('fs-extra');
-const path = require('path');
+const fs_1 = require("fs");
+const path_1 = __importDefault(require("path"));
 class Storage {
     constructor(options, RestClient, Kmf) {
         this._medium = 'cloud';
@@ -47,9 +50,9 @@ class Storage {
                 try {
                     if (this._medium === "local" && keyRingData.path === 'in:memory') {
                         if (typeof options === 'undefined' || !options.path) {
-                            reject("filepath is required for data");
+                            throw new Error("Filepath is required for data");
                         }
-                        const sp = options.path.split(path.sep);
+                        const sp = options.path.split(path_1.default.sep);
                         if (typeof options === 'undefined' || !options.name) {
                             yield this.saveLocal(options.path, sp[sp.length - 1], keyRingData.encrypted);
                         }
@@ -93,8 +96,8 @@ class Storage {
     saveLocal(filePath, fileName, data) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             try {
-                fs.ensureDirSync(filePath);
-                fs.writeFileSync(filePath + path.sep + fileName, data);
+                yield fs_1.promises.mkdir(filePath, { recursive: true });
+                yield fs_1.promises.writeFile(filePath + path_1.default.sep + fileName, data);
                 resolve(true);
             }
             catch (e) {
@@ -105,9 +108,10 @@ class Storage {
     saveCloud(keyRingData) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const stats = fs.statSync(keyRingData.path);
+                const stats = yield fs_1.promises.stat(keyRingData.path);
+                const fd = yield fs_1.promises.open(keyRingData.path, 'r');
                 const params = {
-                    file: fs.createReadStream(keyRingData.path),
+                    file: fd.createReadStream(),
                     size: stats.size
                 };
                 yield this._restClient.multiPartForm('/upload', params);
@@ -131,7 +135,7 @@ class Storage {
     deleteLocal(filePath, fileName) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             try {
-                fs.unlinkSync(filePath + path.sep + fileName);
+                yield fs_1.promises.unlink(filePath + path_1.default.sep + fileName);
                 resolve(true);
             }
             catch (e) {
@@ -140,7 +144,9 @@ class Storage {
         }));
     }
     createDir(filePath) {
-        fs.ensureDirSync(filePath);
+        return __awaiter(this, void 0, void 0, function* () {
+            yield fs_1.promises.mkdir(filePath, { recursive: true });
+        });
     }
     load(fileId) {
         return __awaiter(this, void 0, void 0, function* () {

@@ -35,10 +35,10 @@ exports.Zokrates = void 0;
 const axios_1 = __importDefault(require("axios"));
 const util_1 = require("util");
 const stream = __importStar(require("stream"));
+const path_1 = __importDefault(require("path"));
+const fs_1 = require("fs");
 const exec = require("child_process").execSync;
-const path = require('path');
-const fs = require("fs-extra");
-let dir = path.dirname(__dirname);
+let dir = path_1.default.dirname(__dirname);
 class Zokrates {
     constructor(clientId, apiKey, token, options) {
         if (!options.path) {
@@ -48,11 +48,12 @@ class Zokrates {
         this._apiKey = apiKey;
         this._clientId = clientId;
         this._token = token;
-        this.setPaths(options.path);
+        this._optionsPath = options.path;
     }
     setup() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!this.filesExist()) {
+            yield this.setPaths(this._optionsPath);
+            if (!(yield this.filesExist())) {
                 yield this.getZkFiles(() => {
                     const fields = this.getZkFields();
                     this.computeWitness(fields[0], fields[1], fields[2], fields[3]);
@@ -61,7 +62,18 @@ class Zokrates {
         });
     }
     filesExist() {
-        return fs.existsSync(`${this._storePath}${path.sep}out`) && fs.existsSync(`${this._storePath}${path.sep}proving.key`);
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                yield fs_1.promises.access(`${this._storePath}${path_1.default.sep}out`, fs_1.constants.F_OK);
+                yield fs_1.promises.access(`${this._storePath}${path_1.default.sep}proving.key`, fs_1.constants.F_OK);
+                return true;
+            }
+            catch (e) {
+                console.log('error:', e);
+                return false;
+            }
+            // return fs.existsSync(`${this._storePath}${path.sep}out`) && fs.existsSync(`${this._storePath}${path.sep}proving.key`);
+        });
     }
     getZkFiles(callback) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
@@ -80,7 +92,9 @@ class Zokrates {
                         url: proovingPoint,
                         responseType: 'stream',
                     });
-                    const proovingwriter = fs.createWriteStream(`${this._storePath}${path.sep}proving.key`);
+                    const provingFd = yield fs_1.promises.open(`${this._storePath}${path_1.default.sep}proving.key`, 'r');
+                    const proovingwriter = provingFd.createReadStream();
+                    // const proovingwriter = fs.createWriteStream(`${this._storePath}${path.sep}proving.key`);
                     const totalLengthP = parseInt(prooving.headers['content-length'], 10);
                     prooving.data.on('data', (chunk) => {
                         proofDownloadedBytes += chunk.length;
@@ -104,7 +118,9 @@ class Zokrates {
                         responseType: 'stream',
                     });
                     const totalLength = parseInt(out.headers['content-length'], 10);
-                    const outwriter = fs.createWriteStream(`${this._storePath}${path.sep}out`);
+                    const outFd = yield fs_1.promises.open(`${this._storePath}${path_1.default.sep}out`, 'r');
+                    const outwriter = outFd.createReadStream();
+                    // const outwriter = fs.createWriteStream(`${this._storePath}${path.sep}out`);
                     out.data.on('data', (chunk) => {
                         outDownloadedBytes += chunk.length;
                         const prevPercent = outDownloadPercent;
@@ -127,32 +143,36 @@ class Zokrates {
         }));
     }
     setPaths(_storePath) {
-        const os = process.platform;
-        const match = dir.match(/dist/);
-        fs.ensureDirSync(_storePath);
-        if (!match) {
-            this._libRoot = dir + path.sep + 'zokrates';
-        }
-        else {
-            this._libRoot = dir.replace('dist', 'zokrates');
-        }
-        this._zokRoot = this._libRoot;
-        if (os === 'darwin' || os === 'win32') {
-            this._execPath = this._libRoot + path.sep + os;
-            this._libRoot = this._execPath;
-        }
-        else {
-            this._execPath = this._libRoot + path.sep + 'linux';
-            this._libRoot = this._execPath;
-        }
-        if (os === 'win32') {
-            this._execPath = this._execPath + path.sep + 'zokrates.exe ';
-        }
-        else {
-            this._execPath = this._execPath + path.sep + 'zokrates ';
-        }
-        fs.ensureDirSync(this._libRoot);
-        this._storePath = _storePath;
+        return __awaiter(this, void 0, void 0, function* () {
+            const os = process.platform;
+            const match = dir.match(/dist/);
+            yield fs_1.promises.mkdir(_storePath, { recursive: true });
+            // fs.ensureDirSync(_storePath);
+            if (!match) {
+                this._libRoot = dir + path_1.default.sep + 'zokrates';
+            }
+            else {
+                this._libRoot = dir.replace('dist', 'zokrates');
+            }
+            this._zokRoot = this._libRoot;
+            if (os === 'darwin' || os === 'win32') {
+                this._execPath = this._libRoot + path_1.default.sep + os;
+                this._libRoot = this._execPath;
+            }
+            else {
+                this._execPath = this._libRoot + path_1.default.sep + 'linux';
+                this._libRoot = this._execPath;
+            }
+            if (os === 'win32') {
+                this._execPath = this._execPath + path_1.default.sep + 'zokrates.exe ';
+            }
+            else {
+                this._execPath = this._execPath + path_1.default.sep + 'zokrates ';
+            }
+            yield fs_1.promises.mkdir(this._libRoot, { recursive: true });
+            // fs.ensureDirSync(this._libRoot);
+            this._storePath = _storePath;
+        });
     }
     run(command) {
         const buff = exec(command);
@@ -171,16 +191,16 @@ class Zokrates {
         }
     }
     generateProof() {
-        const command = `${this._execPath} generate-proof --input=${this._storePath}${path.sep}out --proving-key-path=${this._storePath}${path.sep}proving.key --witness=${this._storePath}${path.sep}witness --proof-path=${this._storePath}${path.sep}proof.json`;
+        const command = `${this._execPath} generate-proof --input=${this._storePath}${path_1.default.sep}out --proving-key-path=${this._storePath}${path_1.default.sep}proving.key --witness=${this._storePath}${path_1.default.sep}witness --proof-path=${this._storePath}${path_1.default.sep}proof.json`;
         const compiled = this.run(command);
         if (!compiled.error) {
-            return fs.readJsonSync(`${this._storePath}${path.sep}proof.json`);
+            return require(`${this._storePath}${path_1.default.sep}proof.json`);
         }
         console.error('Unable to generate proof:', compiled.error);
         return false;
     }
     computeWitness(field1, field2, field3, field4) {
-        const command = this._execPath + `compute-witness -a ${field1} ${field2} ${field3} ${field4} --input=${this._storePath}${path.sep}out --output=${this._storePath}${path.sep}witness`;
+        const command = this._execPath + `compute-witness -a ${field1} ${field2} ${field3} ${field4} --input=${this._storePath}${path_1.default.sep}out --output=${this._storePath}${path_1.default.sep}witness`;
         const computeWitness = this.run(command);
         if (!computeWitness.error) {
             return computeWitness.result;

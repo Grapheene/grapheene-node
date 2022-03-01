@@ -22,15 +22,19 @@ function sleep(ms) {
 class AuthorizedRest extends Rest_1.default {
     constructor(base_url, clientId, zk, authDir) {
         super(base_url);
-        this.zk = zk;
-        this.tokenManager = new TokenManager_1.TokenManager(clientId, {
-            proof: JSON.stringify(this.zk.generateProof()),
-            authDir: authDir,
-            onUpdate: this.updateRestHeaders,
-        });
-        if (this.tokenManager.publicKey && this.tokenManager.jwt && this.tokenManager.ready) {
-            this.updateRestHeaders({ Token: this.tokenManager.jwt, Key: JSON.stringify(this.tokenManager.publicKey) });
-        }
+        return (() => __awaiter(this, void 0, void 0, function* () {
+            this.zk = zk;
+            this.tokenManager = yield new TokenManager_1.TokenManager(clientId, {
+                proof: JSON.stringify(this.zk.generateProof()),
+                authDir: authDir,
+                onUpdate: this.updateRestHeaders
+            });
+            this.updateRestHeaders({
+                Token: this.tokenManager.jwt,
+                Key: JSON.stringify(this.tokenManager.publicKey)
+            });
+            return this;
+        }))();
     }
     updateRestHeaders(headers) {
         super.setHeaders(headers);

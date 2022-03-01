@@ -15,15 +15,19 @@ class AuthorizedRest extends Rest {
 
     constructor(base_url: string, clientId: string, zk: Zokrates, authDir: string) {
         super(base_url)
-        this.zk = zk;
-        this.tokenManager = new TokenManager(clientId, {
-            proof: JSON.stringify(this.zk.generateProof()),
-            authDir: authDir,
-            onUpdate: this.updateRestHeaders,
-        });
-        if(this.tokenManager.publicKey && this.tokenManager.jwt && this.tokenManager.ready){
-            this.updateRestHeaders({Token: this.tokenManager.jwt, Key: JSON.stringify(this.tokenManager.publicKey)});
-        }
+        return (async () => {
+            this.zk = zk;
+            this.tokenManager = await new TokenManager(clientId, {
+                proof: JSON.stringify(this.zk.generateProof()),
+                authDir: authDir,
+                onUpdate: this.updateRestHeaders
+            })
+            this.updateRestHeaders({
+                Token: this.tokenManager.jwt,
+                Key: JSON.stringify(this.tokenManager.publicKey)
+            });
+            return this
+        })() as unknown as AuthorizedRest
     }
 
     private updateRestHeaders(headers: AuthHeaders) {

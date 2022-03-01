@@ -30,7 +30,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.decryptFile = exports.encryptFile = exports.decrypt = exports.encrypt = exports.configureKeys = void 0;
 const GCrypto = __importStar(require("./Crypto"));
-const fs = require("fs-extra");
 const configureKeys = (keys) => __awaiter(void 0, void 0, void 0, function* () {
     let hmac, privateKey, publicKey;
     if (keys.hasOwnProperty('hmac')) {

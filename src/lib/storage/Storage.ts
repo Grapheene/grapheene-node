@@ -3,9 +3,8 @@ import TypedArray = NodeJS.TypedArray;
 import {KMF} from "../kmf/KMF";
 import {KeyRingDataOptions, KeyRingDataRequest, StorageOptions} from "../../../index";
 import KeyRingData from "../kmf/KeyRingData";
-
-const fs = require('fs-extra');
-const path = require('path');
+import {promises as fs} from 'fs';
+import path from 'path';
 
 
 export class Storage {
@@ -51,15 +50,13 @@ export class Storage {
             try {
                 if (this._medium === "local" && keyRingData.path === 'in:memory') {
                     if (typeof options === 'undefined' || !options.path) {
-                        reject("filepath is required for data")
+                        throw new Error("Filepath is required for data")
                     }
                     const sp = options.path.split(path.sep);
                     if(typeof options === 'undefined' || !options.name){
-
                         await this.saveLocal(options.path, sp[sp.length - 1], keyRingData.encrypted)
                     }
                     resolve(await this._kmf.ring.updateData({uuid: keyRingData.uuid,path: options.path, name: sp[sp.length - 1], service: this._medium}));
-
                 }
 
                 if(typeof options !== 'undefined' && options.path){
@@ -105,8 +102,8 @@ export class Storage {
     private saveLocal(filePath: string, fileName: string, data: string | TypedArray | DataView) {
         return new Promise(async (resolve, reject) => {
             try {
-                fs.ensureDirSync(filePath)
-                fs.writeFileSync(filePath + path.sep + fileName, data)
+                await fs.mkdir(filePath, {recursive: true})
+                await fs.writeFile(filePath + path.sep + fileName, data);
                 resolve(true)
             } catch (e) {
                 reject(e)
@@ -115,12 +112,12 @@ export class Storage {
     }
 
     private saveCloud(keyRingData: KeyRingData) {
-
         return new Promise(async (resolve, reject) => {
             try {
-                const stats = fs.statSync(keyRingData.path);
+                const stats = await fs.stat(keyRingData.path);
+                const fd = await fs.open(keyRingData.path, 'r')
                 const params = {
-                    file: fs.createReadStream(keyRingData.path),
+                    file: fd.createReadStream(),
                     size: stats.size
                 }
 
@@ -147,7 +144,7 @@ export class Storage {
     private deleteLocal(filePath: string, fileName: string) {
         return new Promise(async (resolve, reject) => {
             try {
-                fs.unlinkSync(filePath + path.sep + fileName)
+                await fs.unlink(filePath + path.sep + fileName)
                 resolve(true)
             } catch (e) {
                 reject(e)
@@ -156,8 +153,8 @@ export class Storage {
         })
     }
 
-    private createDir(filePath: string) {
-        fs.ensureDirSync(filePath)
+    private async createDir(filePath: string) {
+        await fs.mkdir(filePath, {recursive:true})
     }
 
     async load(fileId: string) {

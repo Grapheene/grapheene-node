@@ -1,17 +1,14 @@
 import Rest from "../rest/Rest";
 import KeyRing from "./KeyRing";
-import {Database} from "sqlite3";
 import {PrismaClient} from "@prisma/client";
 
-
 export class KMF {
-
     private readonly _restClient: Rest;
-    private readonly _db: Database | PrismaClient;
+    private readonly _db: PrismaClient;
 
     private _ring: KeyRing;
 
-    constructor(RestClient: Rest, DB: Database | PrismaClient) {
+    constructor(RestClient: Rest, DB: PrismaClient) {
         this._restClient = RestClient;
         this._db = DB;
         this.ring = new KeyRing(this._restClient, this._db);

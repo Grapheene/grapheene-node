@@ -1,7 +1,6 @@
 import {CryptoKeys, KeyData} from "../../../index";
 import * as GCrypto from "./Crypto";
 import * as crypto from "crypto";
-const fs = require("fs-extra");
 
 export const configureKeys = async (keys: KeyData) => {
 
