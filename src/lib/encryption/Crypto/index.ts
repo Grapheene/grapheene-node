@@ -2,8 +2,6 @@ import * as crypto from "crypto";
 import {promises as fs} from 'fs';
 import path from 'path';
 
-const FileReader = require('filereader');
-
 let webcrypto: any, CryptoKeyInstance: any;
 
 if (typeof window === "undefined") {
@@ -247,16 +245,21 @@ export class AESKey {
     }
 
     async encryptFile(file: any) {
-        const fr: any = new FileReader()
-        return new Promise(resolve => {
-            fr.onloadstart = async () => {
-                console.log('Loading file...')
-            }
-            fr.onload = async () => {
+        return new Promise(async(resolve) => {
+            try {
+                const fileData = await fs.readFile(file, 'utf8')
+                const fileBuffer = Buffer.from(fileData, 'utf8')
+                const fileArrayBuffer = new ArrayBuffer(fileData.length)
+                const fileArray = new Uint8Array(fileArrayBuffer)
+                for (let i = 0; i < fileData.length; ++i) {
+                    fileArray[i] = fileBuffer[i]
+                }
+
                 const salt = webcrypto.getRandomValues(new Uint8Array(16))
                 const derivedKey = await this.deriveEncryptionSecretKey(salt)
                 const iv = webcrypto.getRandomValues(new Uint8Array(16))
-                const content = new Uint8Array(fr.result)
+                const content = new Uint8Array(fileArrayBuffer)
+
                 webcrypto.subtle.encrypt({
                     iv,
                     name: 'AES-GCM'
@@ -268,46 +271,52 @@ export class AESKey {
                             lastModified: file.lastModified,
                             type: file.type
                         })
-                        resolve([encFile, content])
+                        return resolve([encFile, content])
                     })
                     .catch((err: Error) => {
                         console.error('Unable to encrypt:', err)
-                        resolve(null)
+                        return resolve(null)
                     })
+            } catch (err) {
+                console.error('Unable to encrypt:', err)
             }
-            fr.readAsArrayBuffer(file)
         })
     }
 
     async decryptFile(file: any, type?: any) {
-        const fr: any = new FileReader()
-        return new Promise(resolve => {
-            fr.onloadstart = async () => {
-                console.info('Loading file...')
-            }
-            fr.onload = async () => {
-                const salt = new Uint8Array(fr.result.slice(16, 32))
+        return new Promise(async(resolve) => {
+            try {
+                const fileData = await fs.readFile(file, 'utf8')
+                const fileBuffer = Buffer.from(fileData, 'utf8')
+                const fileArrayBuffer = new ArrayBuffer(fileData.length)
+                const fileArray = new Uint8Array(fileArrayBuffer)
+                for (let i = 0; i < fileData.length; ++i) {
+                    fileArray[i] = fileBuffer[i]
+                }
+
+                const salt = new Uint8Array(fileArrayBuffer.slice(16, 32))
                 const derivedKey = await this.deriveDecryptionSecretKey(salt)
-                const iv = new Uint8Array(fr.result.slice(0, 16))
-                const content = new Uint8Array(fr.result.slice(32))
+                const iv = new Uint8Array(fileArrayBuffer.slice(0, 16))
+                const content = new Uint8Array(fileArrayBuffer.slice(32))
                 webcrypto.subtle.decrypt({
                     iv,
                     name: 'AES-GCM'
                 }, derivedKey, content)
                     .then((decrypted: any) => {
-                        let opts: any = {}
+                        const opts: any = {}
                         if (type) {
                             opts.type = type
                         }
-                        let blob = new Blob([new Uint8Array(decrypted)], opts)
-                        resolve(blob)
+                        const blob = new Blob([new Uint8Array(decrypted)], opts)
+                        return resolve(blob)
                     })
                     .catch((err: Error) => {
                         console.error("Unable to decrypt:", err)
-                        resolve(null)
+                        return resolve(null)
                     })
+            } catch (err) {
+                console.error('Unable to decrypt:', err)
             }
-            fr.readAsArrayBuffer(file)
         })
     }
 
