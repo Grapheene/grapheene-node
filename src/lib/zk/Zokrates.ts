@@ -50,10 +50,8 @@ export class Zokrates {
             await fs.access(`${this._storePath}${path.sep}proving.key`, fsConstants.F_OK)
             return true
         } catch (e) {
-            console.log('error:', e)
             return false
         }
-        // return fs.existsSync(`${this._storePath}${path.sep}out`) && fs.existsSync(`${this._storePath}${path.sep}proving.key`);
     }
 
     private getZkFiles(callback: Function) {
@@ -74,9 +72,8 @@ export class Zokrates {
                         url: proovingPoint,
                         responseType: 'stream',
                     })
-                    const provingFd = await fs.open(`${this._storePath}${path.sep}proving.key`, 'r')
-                    const proovingwriter = provingFd.createReadStream()
-                    // const proovingwriter = fs.createWriteStream(`${this._storePath}${path.sep}proving.key`);
+                    const provingFd = await fs.open(`${this._storePath}${path.sep}proving.key`, 'w')
+                    const proovingwriter = provingFd.createWriteStream()
                     const totalLengthP = parseInt(prooving.headers['content-length'], 10);
                     prooving.data.on('data', (chunk: any) => {
                         proofDownloadedBytes += chunk.length;
@@ -100,9 +97,8 @@ export class Zokrates {
                         responseType: 'stream',
                     })
                     const totalLength = parseInt(out.headers['content-length'], 10);
-                    const outFd = await fs.open(`${this._storePath}${path.sep}out`, 'r')
-                    const outwriter = outFd.createReadStream()
-                    // const outwriter = fs.createWriteStream(`${this._storePath}${path.sep}out`);
+                    const outFd = await fs.open(`${this._storePath}${path.sep}out`, 'w')
+                    const outwriter = outFd.createWriteStream()
                     out.data.on('data', (chunk: any) => {
                         outDownloadedBytes += chunk.length;
                         const prevPercent = outDownloadPercent;
