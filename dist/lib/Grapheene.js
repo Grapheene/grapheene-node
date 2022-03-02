@@ -21,8 +21,8 @@ const DatabaseGenerator_1 = require("./DatabaseGenerator");
 const Rest_1 = __importDefault(require("./rest/Rest"));
 const fs_1 = require("fs");
 const path_1 = __importDefault(require("path"));
+const Paths_1 = require("./shared/Paths");
 const config = require('../../config.json');
-const node_modules = `${__dirname}${path_1.default.sep}node_modules`;
 const defaults = {
     medium: 'local',
     dir: './',
@@ -75,7 +75,7 @@ class Grapheene {
             try {
                 yield this.ensureDirExist();
                 try {
-                    const pkgJson = `${node_modules}/.prisma/client/package.json`;
+                    const pkgJson = path_1.default.join(Paths_1.prismaClient, 'package.json');
                     yield fs_1.promises.access(pkgJson, fs_1.constants.F_OK);
                     yield fs_1.promises.unlink(pkgJson);
                 }
@@ -83,7 +83,7 @@ class Grapheene {
                     // do nothing
                 }
                 try {
-                    const schemaFile = `${node_modules}/.prisma/client/schema.prisma`;
+                    const schemaFile = path_1.default.join(Paths_1.prismaClient, 'schema.prisma');
                     yield fs_1.promises.access(schemaFile, fs_1.constants.F_OK);
                     yield fs_1.promises.unlink(schemaFile);
                 }
