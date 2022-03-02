@@ -69,10 +69,8 @@ class Zokrates {
                 return true;
             }
             catch (e) {
-                console.log('error:', e);
                 return false;
             }
-            // return fs.existsSync(`${this._storePath}${path.sep}out`) && fs.existsSync(`${this._storePath}${path.sep}proving.key`);
         });
     }
     getZkFiles(callback) {
@@ -92,9 +90,8 @@ class Zokrates {
                         url: proovingPoint,
                         responseType: 'stream',
                     });
-                    const provingFd = yield fs_1.promises.open(`${this._storePath}${path_1.default.sep}proving.key`, 'r');
-                    const proovingwriter = provingFd.createReadStream();
-                    // const proovingwriter = fs.createWriteStream(`${this._storePath}${path.sep}proving.key`);
+                    const provingFd = yield fs_1.promises.open(`${this._storePath}${path_1.default.sep}proving.key`, 'w');
+                    const proovingwriter = provingFd.createWriteStream();
                     const totalLengthP = parseInt(prooving.headers['content-length'], 10);
                     prooving.data.on('data', (chunk) => {
                         proofDownloadedBytes += chunk.length;
@@ -118,9 +115,8 @@ class Zokrates {
                         responseType: 'stream',
                     });
                     const totalLength = parseInt(out.headers['content-length'], 10);
-                    const outFd = yield fs_1.promises.open(`${this._storePath}${path_1.default.sep}out`, 'r');
-                    const outwriter = outFd.createReadStream();
-                    // const outwriter = fs.createWriteStream(`${this._storePath}${path.sep}out`);
+                    const outFd = yield fs_1.promises.open(`${this._storePath}${path_1.default.sep}out`, 'w');
+                    const outwriter = outFd.createWriteStream();
                     out.data.on('data', (chunk) => {
                         outDownloadedBytes += chunk.length;
                         const prevPercent = outDownloadPercent;

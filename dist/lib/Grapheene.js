@@ -20,15 +20,16 @@ const Storage_1 = require("./storage/Storage");
 const DatabaseGenerator_1 = require("./DatabaseGenerator");
 const Rest_1 = __importDefault(require("./rest/Rest"));
 const fs_1 = require("fs");
-const path = require('path');
+const path_1 = __importDefault(require("path"));
 const config = require('../../config.json');
-const node_modules = `${__dirname}${path.sep}node_modules`;
+const node_modules = `${__dirname}${path_1.default.sep}node_modules`;
 const defaults = {
     medium: 'local',
     dir: './',
+    projectDir: '.grapheene',
     db: {
         migrate: false
-    }
+    },
 };
 class Grapheene {
     constructor(clientId, apiKey, token, opts) {
@@ -36,8 +37,8 @@ class Grapheene {
         this.apiKey = apiKey;
         this.clientId = clientId;
         this.token = token;
-        this.filesDir = path.dirname(__dirname) + path.sep + this.clientId + path.sep + 'files';
-        this.prismaDir = path.dirname(__dirname).replace(/(dist.*)/, 'prisma');
+        this.filesDir = process.cwd() + path_1.default.sep + this._options.projectDir + path_1.default.sep + this.clientId + path_1.default.sep + 'files';
+        this.prismaDir = path_1.default.dirname(__dirname).replace(/(dist.*)/, 'prisma');
         /*
         if (!this.apiKey.startsWith('SK') || !this.apiKey) {
             throw new Error('Invalid APK Key')
@@ -46,17 +47,19 @@ class Grapheene {
         if (!this.clientId.startsWith('US') || !this.clientId) {
             throw new Error('Invalid Client ID')
         }
-
-         */
-        this.zkDir = this.filesDir + path.sep + 'zk';
-        this.cryptoDir = this.filesDir + path.sep + 'encrypt';
-        this.dbDir = this.filesDir + path.sep + 'db';
-        this.authDir = this.filesDir + path.sep + 'auth';
+        */
+        this.zkDir = this.filesDir + path_1.default.sep + 'zk';
+        this.cryptoDir = this.filesDir + path_1.default.sep + 'encrypt';
+        this.dbDir = this.filesDir + path_1.default.sep + 'db';
+        this.authDir = this.filesDir + path_1.default.sep + 'auth';
     }
     ensureDirExist() {
         return __awaiter(this, void 0, void 0, function* () {
             try {
-                yield fs_1.promises.mkdir(this.filesDir, { recursive: true });
+                const isNewProject = yield fs_1.promises.mkdir(this.filesDir, { recursive: true });
+                if (isNewProject) {
+                    console.log(`It looks like you have created a new project! Be sure to add "${this._options.projectDir}" to your .gitignore`);
+                }
                 yield fs_1.promises.mkdir(this.zkDir, { recursive: true });
                 yield fs_1.promises.mkdir(this.cryptoDir, { recursive: true });
                 yield fs_1.promises.mkdir(this.dbDir, { recursive: true });

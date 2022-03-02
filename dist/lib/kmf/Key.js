@@ -35,7 +35,7 @@ class Key {
             }).then((row) => {
                 key = JSON.parse(row.data);
                 resolve(key[type]);
-                resolve(this.uuid);
+                // resolve(this.uuid);
             }).catch(() => {
                 reject('No key data found for ' + this.uuid);
             });

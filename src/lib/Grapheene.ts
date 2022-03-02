@@ -6,17 +6,18 @@ import {Storage} from "./storage/Storage";
 import {DatabaseGenerator} from './DatabaseGenerator';
 import {GrapheeneOptions} from "../../index";
 import Rest from "./rest/Rest";
-
 import {constants as fsConstants, promises as fs} from 'fs';
-const path = require('path');
+import path from 'path';
+
 const config = require('../../config.json')
 const node_modules = `${__dirname}${path.sep}node_modules`;
 const defaults = {
     medium: 'local',
     dir: './',
+    projectDir: '.grapheene',
     db: {
         migrate: false
-    }
+    },
 }
 
 export class Grapheene {
@@ -29,22 +30,23 @@ export class Grapheene {
     private readonly dbDir: string;
     private readonly authDir: string;
     private readonly prismaDir: string;
+    private readonly _options: GrapheeneOptions;
     private _restClient: AuthorizedRest;
 
     private _db: any;
-    private _options: GrapheeneOptions;
     private _kmf: KMF;
     private _zk: Zokrates;
     private _storage: any;
 
-    constructor(clientId: string, apiKey: string, token: string, opts?: GrapheeneOptions) {
+    constructor(clientId: string, apiKey: string, token: string, opts?: any) {
         this._options = Object.assign({}, defaults, opts);
         this.apiKey = apiKey;
         this.clientId = clientId;
         this.token = token;
 
-        this.filesDir = path.dirname(__dirname) + path.sep + this.clientId + path.sep + 'files'
+        this.filesDir = process.cwd() + path.sep + this._options.projectDir + path.sep + this.clientId + path.sep + 'files'
         this.prismaDir = path.dirname(__dirname).replace(/(dist.*)/, 'prisma')
+
         /*
         if (!this.apiKey.startsWith('SK') || !this.apiKey) {
             throw new Error('Invalid APK Key')
@@ -53,8 +55,7 @@ export class Grapheene {
         if (!this.clientId.startsWith('US') || !this.clientId) {
             throw new Error('Invalid Client ID')
         }
-
-         */
+        */
 
         this.zkDir = this.filesDir + path.sep + 'zk';
         this.cryptoDir = this.filesDir + path.sep + 'encrypt';
@@ -64,7 +65,11 @@ export class Grapheene {
 
     private async ensureDirExist() {
         try {
-            await fs.mkdir(this.filesDir, {recursive: true})
+            const isNewProject = await fs.mkdir(this.filesDir, {recursive: true})
+            if (isNewProject) {
+                console.log(`It looks like you have created a new project! Be sure to add "${this._options.projectDir}" to your .gitignore`)
+            }
+
             await fs.mkdir(this.zkDir, {recursive: true})
             await fs.mkdir(this.cryptoDir, {recursive: true})
             await fs.mkdir(this.dbDir, {recursive: true})

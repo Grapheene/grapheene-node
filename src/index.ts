@@ -1,8 +1,7 @@
 const {Grapheene} = require('./lib/Grapheene')
 
-export const initializer = function (uuid: string, apiKey: string, opts?: any) {
-
-    return new Grapheene(uuid, apiKey, opts);
+export const initializer = function (uuid: string, apiKey: string, token: string, opts?: any) {
+    return new Grapheene(uuid, apiKey, token, opts);
 };
 
 
