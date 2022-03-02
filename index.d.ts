@@ -1,4 +1,3 @@
-import {AxiosInstance} from "axios";
 import * as crypto from "crypto";
 import KeyRingData from "./src/lib/kmf/KeyRingData";
 import Member from "./src/lib/kmf/Member";
@@ -7,6 +6,7 @@ import Key from "./src/lib/kmf/Key";
 export interface GrapheeneOptions {
     medium?: 'cloud' | 'local';
     dir?: string;
+    projectDir?: string;
     db?: {migrate: boolean}
 }
 
