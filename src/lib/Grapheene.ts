@@ -43,8 +43,9 @@ export class Grapheene {
         this.clientId = clientId;
         this.token = token;
 
-        this.filesDir = path.dirname(__dirname) + path.sep + this.clientId + path.sep + 'files'
+        this.filesDir = process.cwd() + path.sep + '.grapheene' + path.sep + this.clientId + path.sep + 'files'
         this.prismaDir = path.dirname(__dirname).replace(/(dist.*)/, 'prisma')
+
         /*
         if (!this.apiKey.startsWith('SK') || !this.apiKey) {
             throw new Error('Invalid APK Key')
@@ -53,8 +54,7 @@ export class Grapheene {
         if (!this.clientId.startsWith('US') || !this.clientId) {
             throw new Error('Invalid Client ID')
         }
-
-         */
+        */
 
         this.zkDir = this.filesDir + path.sep + 'zk';
         this.cryptoDir = this.filesDir + path.sep + 'encrypt';
