@@ -68,7 +68,7 @@ ${postfix}`;
         let dbReady = false;
         while (!dbReady) {
             try {
-                yield fs_1.promises.access(prismaSchema);
+                yield fs_1.promises.access(path_1.default.join(Paths_1.prismaClient, 'schema.prisma'));
                 dbReady = true;
             }
             catch (e) {

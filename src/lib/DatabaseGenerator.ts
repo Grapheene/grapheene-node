@@ -2,7 +2,7 @@ import {PrismaClient} from "@prisma/client";
 import path from 'path';
 import {constants as fsConstants, promises as fs} from 'fs';
 import {execSync as exec, spawnSync as spawn} from "child_process";
-import {prismaExec, prismaStorage} from './shared/Paths'
+import {prismaClient, prismaExec, prismaStorage} from './shared/Paths'
 
 const {prefix, postfix} = require('../../prisma/schemas/sqlite.prisma');
 const dbUri = process.env.DATABASE_URL;
@@ -58,7 +58,7 @@ ${postfix}`
         let dbReady = false;
         while (!dbReady) {
             try {
-                await fs.access(prismaSchema);
+                await fs.access(path.join(prismaClient, 'schema.prisma'));
                 dbReady = true;
             } catch (e) {
                 // do nothing
