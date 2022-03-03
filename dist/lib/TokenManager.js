@@ -22,11 +22,11 @@ const e = (0, EventFactory_1.default)();
 class TokenManager {
     constructor(clientId, options) {
         this.ready = false;
-        this._clientId = clientId;
-        this._proof = options.proof;
-        this._onUpdate = options.onUpdate;
-        this._authDir = options.authDir;
         return (() => __awaiter(this, void 0, void 0, function* () {
+            this._clientId = clientId;
+            this._proof = options.proof;
+            this._onUpdate = options.onUpdate;
+            this._authDir = options.authDir;
             e.on('refreshToken', () => {
                 this.auth(this._clientId, this._proof);
             });

@@ -45,7 +45,6 @@ ${postfix}`;
             }
             catch (e) {
                 // DB or migrations don't exist, run them
-                yield run(`${Paths_1.prismaExec} migrate dev --name init --schema "${prismaSchema}"`);
                 yield run(`${Paths_1.prismaExec} migrate deploy --schema "${prismaSchema}"`);
             }
         }
@@ -62,7 +61,6 @@ ${postfix}`;
             catch (e) {
                 // Migrations don't exist, run them
                 if (options.db.migrate) {
-                    yield run(`${Paths_1.prismaExec} migrate dev --name init --schema "${prismaSchema}"`);
                     yield run(`${Paths_1.prismaExec} migrate deploy --schema "${prismaSchema}"`);
                 }
             }
