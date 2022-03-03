@@ -9,9 +9,9 @@ const jwt = require('jsonwebtoken')
 const e = createEmitter();
 
 export class TokenManager {
-    private readonly _clientId: string;
-    private readonly _onUpdate: Function;
-    private readonly _authDir: string;
+    private _clientId: string;
+    private _onUpdate: Function;
+    private _authDir: string;
     private _proof: string;
     private _token: string;
     private _rsa: string;
@@ -20,12 +20,12 @@ export class TokenManager {
     ready: boolean = false
 
     constructor(clientId: string, options: TokenManagerOptions) {
-        this._clientId = clientId;
-        this._proof = options.proof;
-        this._onUpdate = options.onUpdate;
-        this._authDir = options.authDir;
-
         return (async () => {
+            this._clientId = clientId;
+            this._proof = options.proof;
+            this._onUpdate = options.onUpdate;
+            this._authDir = options.authDir;
+
             e.on('refreshToken', () => {
                 this.auth(this._clientId, this._proof)
             });
