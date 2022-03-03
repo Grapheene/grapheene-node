@@ -35,7 +35,6 @@ ${postfix}`
                 await fs.access(path.join(prismaStorage, 'migrations'), fsConstants.F_OK);
             } catch (e) {
                 // DB or migrations don't exist, run them
-                await run(`${prismaExec} migrate dev --name init --schema "${prismaSchema}"`);
                 await run(`${prismaExec} migrate deploy --schema "${prismaSchema}"`);
             }
         } else if (dbUri.match(/^mongodb/)) {
@@ -51,7 +50,6 @@ ${postfix}`
             } catch (e) {
                 // Migrations don't exist, run them
                 if (options.db.migrate) {
-                    await run(`${prismaExec} migrate dev --name init --schema "${prismaSchema}"`);
                     await run(`${prismaExec} migrate deploy --schema "${prismaSchema}"`);
                 }
             }
