@@ -25,11 +25,11 @@ export class TokenManager {
         this._onUpdate = options.onUpdate;
         this._authDir = options.authDir;
 
-        e.on('refreshToken', () => {
-            this.auth(this._clientId, this._proof)
-        });
-
         return (async () => {
+            e.on('refreshToken', () => {
+                this.auth(this._clientId, this._proof)
+            });
+
             try {
                 await fs.mkdir(this._authDir, {recursive: true})
                 this._restClient = new Rest(config.baseUrl);
