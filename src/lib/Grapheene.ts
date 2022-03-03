@@ -8,9 +8,9 @@ import {GrapheeneOptions} from "../../index";
 import Rest from "./rest/Rest";
 import {constants as fsConstants, promises as fs} from 'fs';
 import path from 'path';
+import {prismaClient} from './shared/Paths'
 
 const config = require('../../config.json')
-const node_modules = `${__dirname}${path.sep}node_modules`;
 const defaults = {
     medium: 'local',
     dir: './',
@@ -84,7 +84,7 @@ export class Grapheene {
             await this.ensureDirExist()
 
             try {
-                const pkgJson = `${node_modules}/.prisma/client/package.json`;
+                const pkgJson = path.join(prismaClient, 'package.json');
                 await fs.access(pkgJson, fsConstants.F_OK);
                 await fs.unlink(pkgJson);
             } catch (e) {
@@ -92,7 +92,7 @@ export class Grapheene {
             }
 
             try {
-                const schemaFile = `${node_modules}/.prisma/client/schema.prisma`;
+                const schemaFile = path.join(prismaClient, 'schema.prisma');
                 await fs.access(schemaFile, fsConstants.F_OK);
                 await fs.unlink(schemaFile);
             } catch (e) {
