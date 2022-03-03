@@ -1,4 +1,3 @@
-import {PrismaClient} from "@prisma/client";
 import path from 'path';
 import {constants as fsConstants, promises as fs} from 'fs';
 import {execSync as exec, spawnSync as spawn} from "child_process";
@@ -58,14 +57,16 @@ ${postfix}`
         let dbReady = false;
         while (!dbReady) {
             try {
-                await fs.access(path.join(prismaClient, 'schema.prisma'));
+                await fs.access(path.join(prismaClient, 'schema.prisma'))
                 dbReady = true;
             } catch (e) {
                 // do nothing
             }
         }
-        process.stdout.write('done!\n');
 
+        // NOTE: this require has to be here to prevent using the cached unusable Prisma client
+        const {PrismaClient} = require('@prisma/client');
+        process.stdout.write('done!\n');
         return new PrismaClient();
     }
 
@@ -93,7 +94,7 @@ ${postfix}`
         }
     }
 
-    let db: PrismaClient;
+    let db: any;
     if (dbUri) {
         console.log('Custom DB URI provided')
         db = await setupDb(options);

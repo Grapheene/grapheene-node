@@ -13,7 +13,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DatabaseGenerator = void 0;
-const client_1 = require("@prisma/client");
 const path_1 = __importDefault(require("path"));
 const fs_1 = require("fs");
 const child_process_1 = require("child_process");
@@ -75,8 +74,10 @@ ${postfix}`;
                 // do nothing
             }
         }
+        // NOTE: this require has to be here to prevent using the cached unusable Prisma client
+        const { PrismaClient } = require('@prisma/client');
         process.stdout.write('done!\n');
-        return new client_1.PrismaClient();
+        return new PrismaClient();
     });
     const run = (command, interactive) => __awaiter(void 0, void 0, void 0, function* () {
         let buff;
