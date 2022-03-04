@@ -108,7 +108,6 @@ typings/
 /db/
 /dist/files/
 /prisma/schema.prisma
-/prisma/migrations/
 .DS_Store
 .idea
 
