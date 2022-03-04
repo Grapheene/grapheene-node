@@ -13,12 +13,10 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TokenManager = void 0;
-const EventFactory_1 = __importDefault(require("./EventFactory"));
 const Rest_1 = __importDefault(require("./rest/Rest"));
 const fs_1 = require("fs");
 const config = require('../../config.json');
 const jwt = require('jsonwebtoken');
-const e = (0, EventFactory_1.default)();
 class TokenManager {
     constructor(clientId, options) {
         this.ready = false;
@@ -27,9 +25,6 @@ class TokenManager {
             this._proof = options.proof;
             this._onUpdate = options.onUpdate;
             this._authDir = options.authDir;
-            e.on('refreshToken', () => __awaiter(this, void 0, void 0, function* () {
-                yield this.auth(this._clientId, this._proof);
-            }));
             try {
                 yield fs_1.promises.mkdir(this._authDir, { recursive: true });
                 this._restClient = new Rest_1.default(config.baseUrl);
@@ -49,43 +44,49 @@ class TokenManager {
     }
     loadToken(clientId, proof) {
         return __awaiter(this, void 0, void 0, function* () {
-            try {
-                const tokenFile = `${this._authDir}/token`;
-                const rsaFile = `${this._authDir}/rsa`;
-                yield fs_1.promises.access(tokenFile, fs_1.constants.F_OK);
-                yield fs_1.promises.access(rsaFile, fs_1.constants.F_OK);
-                const token = yield fs_1.promises.readFile(tokenFile, 'utf8');
-                const rsa = yield fs_1.promises.readFile(rsaFile, 'utf8');
-                jwt.verify(token, rsa, { algorithms: ['RS256'] }, (err, decoded) => {
-                    if (err) {
-                        if (err.message === 'jwt expired') {
-                            console.log('Refreshing JWT...');
-                            e.emit('refreshToken');
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                try {
+                    const tokenFile = `${this._authDir}/token`;
+                    const rsaFile = `${this._authDir}/rsa`;
+                    yield fs_1.promises.access(tokenFile, fs_1.constants.F_OK);
+                    yield fs_1.promises.access(rsaFile, fs_1.constants.F_OK);
+                    const token = yield fs_1.promises.readFile(tokenFile, 'utf8');
+                    const rsa = yield fs_1.promises.readFile(rsaFile, 'utf8');
+                    jwt.verify(token, rsa, { algorithms: ['RS256'] }, (err, decoded) => __awaiter(this, void 0, void 0, function* () {
+                        if (err) {
+                            if (err.message === 'jwt expired') {
+                                console.log('Refreshing JWT...');
+                                yield this.auth(this._clientId, this._proof);
+                                return resolve();
+                            }
+                            else {
+                                console.error('Unable to verify token:', err.message);
+                                return reject(err.message);
+                            }
                         }
                         else {
-                            console.error('Unable to verify token:', err.message);
+                            const unixtime = Math.floor(+new Date() / 1000);
+                            if (decoded.exp - unixtime <= 300) {
+                                console.log('Refreshing JWT...');
+                                yield this.auth(this._clientId, this._proof);
+                                return resolve();
+                            }
+                            else {
+                                this._token = token;
+                                this._rsa = rsa;
+                                this._onUpdate({ Token: this._token, Key: this._rsa });
+                                this.ready = true;
+                                return resolve();
+                            }
                         }
-                    }
-                    else {
-                        const unixtime = Math.floor(+new Date() / 1000);
-                        if (decoded.exp - unixtime <= 300) {
-                            e.emit('refreshToken');
-                        }
-                        else {
-                            this._token = token;
-                            this._rsa = rsa;
-                            this._onUpdate({ Token: this._token, Key: this._rsa });
-                            this.ready = true;
-                        }
-                    }
-                });
-            }
-            catch (e) {
-                // ignore error
-                yield this.getToken(clientId, proof).then(() => {
+                    }));
+                }
+                catch (e) {
+                    // ignore error
+                    yield this.getToken(clientId, proof);
                     this.ready = true;
-                });
-            }
+                }
+            }));
         });
     }
     getToken(clientId, proof) {
@@ -117,11 +118,11 @@ class TokenManager {
     watch() {
         this.interval = setInterval(() => {
             if (this._token && this._rsa) {
-                jwt.verify(this._token, this._rsa, { algorithms: ['RS256'] }, function (err, decoded) {
+                jwt.verify(this._token, this._rsa, { algorithms: ['RS256'] }, (err, decoded) => __awaiter(this, void 0, void 0, function* () {
                     if (err) {
                         if (err.message === 'jwt expired') {
                             console.log('Refreshing JWT...');
-                            e.emit('refreshToken');
+                            yield this.auth(this._clientId, this._proof);
                         }
                         else {
                             console.error('Unable to verify token:', err.message);
@@ -130,10 +131,11 @@ class TokenManager {
                     else {
                         const unixtime = Math.floor(+new Date() / 1000);
                         if (decoded.exp - unixtime <= 300) {
-                            e.emit('refreshToken');
+                            console.log('Refreshing JWT...');
+                            yield this.auth(this._clientId, this._proof);
                         }
                     }
-                });
+                }));
             }
         }, 60000);
     }
