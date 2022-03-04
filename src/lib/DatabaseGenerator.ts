@@ -28,14 +28,8 @@ ${postfix}`
 
             await fs.writeFile(path.join(prismaStorage, 'schema.prisma'), sqlitePrisma);
             await run(`${prismaExec} generate --schema "${prismaSchema}"`);
+            await run(`${prismaExec} migrate deploy --schema "${prismaSchema}"`);
 
-            try {
-                await fs.access(dbPath, fsConstants.F_OK);
-                await fs.access(path.join(prismaStorage, 'migrations'), fsConstants.F_OK);
-            } catch (e) {
-                // DB or migrations don't exist, run them
-                await run(`${prismaExec} migrate deploy --schema "${prismaSchema}"`);
-            }
         } else if (dbUri.match(/^mongodb/)) {
             await fs.copyFile(path.join(prismaStorage, 'schemas', 'mongo.prisma'), prismaSchema);
             await run(`${prismaExec} generate --schema "${prismaSchema}"`);

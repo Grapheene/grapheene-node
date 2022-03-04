@@ -38,14 +38,7 @@ const DatabaseGenerator = (options) => __awaiter(void 0, void 0, void 0, functio
 ${postfix}`;
             yield fs_1.promises.writeFile(path_1.default.join(Paths_1.prismaStorage, 'schema.prisma'), sqlitePrisma);
             yield run(`${Paths_1.prismaExec} generate --schema "${prismaSchema}"`);
-            try {
-                yield fs_1.promises.access(dbPath, fs_1.constants.F_OK);
-                yield fs_1.promises.access(path_1.default.join(Paths_1.prismaStorage, 'migrations'), fs_1.constants.F_OK);
-            }
-            catch (e) {
-                // DB or migrations don't exist, run them
-                yield run(`${Paths_1.prismaExec} migrate deploy --schema "${prismaSchema}"`);
-            }
+            yield run(`${Paths_1.prismaExec} migrate deploy --schema "${prismaSchema}"`);
         }
         else if (dbUri.match(/^mongodb/)) {
             yield fs_1.promises.copyFile(path_1.default.join(Paths_1.prismaStorage, 'schemas', 'mongo.prisma'), prismaSchema);
