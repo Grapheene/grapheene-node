@@ -26,8 +26,8 @@ export class TokenManager {
             this._onUpdate = options.onUpdate;
             this._authDir = options.authDir;
 
-            e.on('refreshToken', () => {
-                this.auth(this._clientId, this._proof)
+            e.on('refreshToken', async () => {
+                await this.auth(this._clientId, this._proof)
             });
 
             try {
@@ -101,12 +101,12 @@ export class TokenManager {
         }
     }
 
-    private auth(clientId: string, proof: string) {
+    private async auth(clientId: string, proof: string) {
         if (!proof || !clientId) {
             throw new Error('Token manager is not set')
         }
         clearInterval(this.interval);
-        this.getToken(clientId, proof);
+        await this.getToken(clientId, proof);
     }
 
     private watch() {

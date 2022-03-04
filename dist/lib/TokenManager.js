@@ -27,9 +27,9 @@ class TokenManager {
             this._proof = options.proof;
             this._onUpdate = options.onUpdate;
             this._authDir = options.authDir;
-            e.on('refreshToken', () => {
-                this.auth(this._clientId, this._proof);
-            });
+            e.on('refreshToken', () => __awaiter(this, void 0, void 0, function* () {
+                yield this.auth(this._clientId, this._proof);
+            }));
             try {
                 yield fs_1.promises.mkdir(this._authDir, { recursive: true });
                 this._restClient = new Rest_1.default(config.baseUrl);
@@ -106,11 +106,13 @@ class TokenManager {
         });
     }
     auth(clientId, proof) {
-        if (!proof || !clientId) {
-            throw new Error('Token manager is not set');
-        }
-        clearInterval(this.interval);
-        this.getToken(clientId, proof);
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!proof || !clientId) {
+                throw new Error('Token manager is not set');
+            }
+            clearInterval(this.interval);
+            yield this.getToken(clientId, proof);
+        });
     }
     watch() {
         this.interval = setInterval(() => {
