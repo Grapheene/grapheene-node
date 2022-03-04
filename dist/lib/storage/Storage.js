@@ -109,9 +109,8 @@ class Storage {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             try {
                 const stats = yield fs_1.promises.stat(keyRingData.path);
-                const fd = yield fs_1.promises.open(keyRingData.path, 'r');
                 const params = {
-                    file: fd.createReadStream(),
+                    file: (0, fs_1.createReadStream)(keyRingData.path),
                     size: stats.size
                 };
                 yield this._restClient.multiPartForm('/upload', params);

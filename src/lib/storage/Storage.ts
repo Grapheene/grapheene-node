@@ -3,7 +3,7 @@ import TypedArray = NodeJS.TypedArray;
 import {KMF} from "../kmf/KMF";
 import {KeyRingDataOptions, KeyRingDataRequest, StorageOptions} from "../../../index";
 import KeyRingData from "../kmf/KeyRingData";
-import {promises as fs} from 'fs';
+import {promises as fs, createReadStream} from 'fs';
 import path from 'path';
 
 
@@ -115,9 +115,8 @@ export class Storage {
         return new Promise(async (resolve, reject) => {
             try {
                 const stats = await fs.stat(keyRingData.path);
-                const fd = await fs.open(keyRingData.path, 'r')
                 const params = {
-                    file: fd.createReadStream(),
+                    file: createReadStream(keyRingData.path),
                     size: stats.size
                 }
 
