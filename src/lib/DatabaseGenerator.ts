@@ -90,10 +90,11 @@ ${postfix}`
 
     let db: any;
     if (dbUri) {
-        console.log('Custom DB URI provided')
+        console.log('Custom DATABASE_URL provided')
         db = await setupDb(options);
     } else {
-        console.log('No DB URI provided, using a default SQLite local db')
+        console.log('No custom DATABASE_URL provided, using a default SQLite local db')
+        console.log('    Set DATABASE_URL env if you want to use your own PostgreSQL db')
         db = await setupDb({...options, dbProvider: 'sqlite'})
     }
     return db;
