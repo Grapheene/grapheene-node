@@ -44,7 +44,7 @@ class TokenManager {
     }
     getAuth(proof) {
         return __awaiter(this, void 0, void 0, function* () {
-            return this.getToken(this._clientId, proof);
+            return yield this.getToken(this._clientId, proof);
         });
     }
     loadToken(clientId, proof) {
@@ -82,7 +82,7 @@ class TokenManager {
             }
             catch (e) {
                 // ignore error
-                this.getToken(clientId, proof).then(() => {
+                yield this.getToken(clientId, proof).then(() => {
                     this.ready = true;
                 });
             }

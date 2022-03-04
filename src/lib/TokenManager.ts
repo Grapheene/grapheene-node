@@ -43,7 +43,7 @@ export class TokenManager {
     }
 
     async getAuth(proof: string) {
-        return this.getToken(this._clientId, proof);
+        return await this.getToken(this._clientId, proof);
     }
 
     private async loadToken(clientId: string, proof: string) {
@@ -80,7 +80,7 @@ export class TokenManager {
         } catch (e) {
             // ignore error
 
-            this.getToken(clientId, proof).then(() => {
+            await this.getToken(clientId, proof).then(() => {
                 this.ready = true
             })
         }
