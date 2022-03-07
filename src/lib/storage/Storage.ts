@@ -124,7 +124,7 @@ export class Storage {
                 }
                 let name = options.name || ringData.uuid
                 let filePath = options.path
-                const savedPath = await this._restClient.download('/file/' + ringData.path, {path: options.path})
+                const savedPath = await this._restClient.download('/file/' + ringData.path, {path: filePath})
                 resolve(await this._kmf.ring.updateData({
                     uuid: ringData.uuid,
                     path: savedPath,
@@ -152,9 +152,16 @@ export class Storage {
     private saveCloud(keyRingData: KeyRingData) {
         return new Promise(async (resolve, reject) => {
             try {
-                const stats = await fs.stat(keyRingData.path);
+                let savePath = keyRingData.path;
+                if(keyRingData.path === 'in:memory'){
+                    const dirPath = path.join(__dirname, '/tmp/'+keyRingData.uuid);
+                    await fs.mkdir(dirPath);
+                    await fs.writeFile(dirPath, keyRingData.encrypted)
+                    savePath = dirPath
+                }
+                const stats = await fs.stat(savePath);
                 const params = {
-                    file: createReadStream(keyRingData.path),
+                    file: createReadStream(savePath),
                     size: stats.size
                 }
 
