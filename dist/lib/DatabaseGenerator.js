@@ -37,8 +37,13 @@ const DatabaseGenerator = (options) => __awaiter(void 0, void 0, void 0, functio
   url      = "file:${dbPath}"
 ${postfix}`;
             yield fs_1.promises.writeFile(path_1.default.join(Paths_1.prismaStorage, 'schema.prisma'), sqlitePrisma);
-            yield run(`${Paths_1.prismaExec} generate --schema "${prismaSchema}"`);
-            yield run(`${Paths_1.prismaExec} migrate deploy --schema "${prismaSchema}"`);
+            try {
+                yield run(`${Paths_1.prismaExec} generate --schema "${prismaSchema}"`);
+                yield run(`${Paths_1.prismaExec} migrate deploy --schema "${prismaSchema}"`);
+            }
+            catch (e) {
+                console.log(e.message);
+            }
         }
         else if (dbUri.match(/^mongodb/)) {
             yield fs_1.promises.copyFile(path_1.default.join(Paths_1.prismaStorage, 'schemas', 'mongo.prisma'), prismaSchema);
