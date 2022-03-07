@@ -56,17 +56,32 @@ class Storage {
                         if (typeof options === 'undefined' || !options.name) {
                             yield this.saveLocal(options.path, sp[sp.length - 1], keyRingData.encrypted);
                         }
-                        resolve(yield this._kmf.ring.updateData({ uuid: keyRingData.uuid, path: options.path, name: sp[sp.length - 1], service: this._medium }));
+                        resolve(yield this._kmf.ring.updateData({
+                            uuid: keyRingData.uuid,
+                            path: options.path,
+                            name: sp[sp.length - 1],
+                            service: this._medium
+                        }));
                     }
                     if (typeof options !== 'undefined' && options.path) {
                         keyRingData.path = options.path;
                     }
                     if (this._medium === "local" && keyRingData.path === 'local') {
-                        resolve(yield this._kmf.ring.updateData({ uuid: keyRingData.uuid, path: keyRingData.path, name: keyRingData.name, service: this._medium }));
+                        resolve(yield this._kmf.ring.updateData({
+                            uuid: keyRingData.uuid,
+                            path: keyRingData.path,
+                            name: keyRingData.name,
+                            service: this._medium
+                        }));
                     }
                     if (this._medium === "cloud") {
                         yield this.saveCloud(keyRingData);
-                        resolve(yield this._kmf.ring.updateData({ uuid: keyRingData.uuid, path: keyRingData.path, name: keyRingData.name, service: this._medium }));
+                        resolve(yield this._kmf.ring.updateData({
+                            uuid: keyRingData.uuid,
+                            path: keyRingData.path,
+                            name: keyRingData.name,
+                            service: this._medium
+                        }));
                     }
                 }
                 catch (e) {
@@ -93,6 +108,27 @@ class Storage {
             }
         }));
     }
+    download(ringData, options) {
+        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                if (!options.hasOwnProperty('path')) {
+                    throw new Error('Local path for downloading cloud data must be defined');
+                }
+                let name = options.name || ringData.uuid;
+                let filePath = options.path;
+                const savedPath = yield this._restClient.download('/file/' + ringData.path, { path: filePath });
+                resolve(yield this._kmf.ring.updateData({
+                    uuid: ringData.uuid,
+                    path: savedPath,
+                    name: name,
+                    service: 'local'
+                }));
+            }
+            catch (e) {
+                reject(e);
+            }
+        }));
+    }
     saveLocal(filePath, fileName, data) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             try {
@@ -108,12 +144,20 @@ class Storage {
     saveCloud(keyRingData) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const stats = yield fs_1.promises.stat(keyRingData.path);
+                let savePath = keyRingData.path;
+                if (keyRingData.path === 'in:memory') {
+                    const dirPath = path_1.default.join(__dirname, '/tmp/' + keyRingData.uuid);
+                    yield fs_1.promises.mkdir(dirPath);
+                    yield fs_1.promises.writeFile(dirPath, keyRingData.encrypted);
+                    savePath = dirPath;
+                }
+                const stats = yield fs_1.promises.stat(savePath);
                 const params = {
-                    file: (0, fs_1.createReadStream)(keyRingData.path),
+                    file: (0, fs_1.createReadStream)(savePath),
                     size: stats.size
                 };
-                yield this._restClient.multiPartForm('/upload', params);
+                const result = yield this._restClient.multiPartForm('/upload', params);
+                console.log(result);
                 resolve(true);
             }
             catch (e) {
