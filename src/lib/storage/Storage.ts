@@ -42,8 +42,8 @@ export class Storage {
         return this._kmf.ring.data;
     }
 
-    async save(keyRingData: KeyRingData, options?:{path?: string, name?: string}) {
-        if(typeof options !== 'undefined' && options.name){
+    async save(keyRingData: KeyRingData, options?: { path?: string, name?: string }) {
+        if (typeof options !== 'undefined' && options.name) {
             keyRingData.name = options.name;
         }
         return new Promise(async (resolve, reject) => {
@@ -53,23 +53,38 @@ export class Storage {
                         throw new Error("Filepath is required for data")
                     }
                     const sp = options.path.split(path.sep);
-                    if(typeof options === 'undefined' || !options.name){
+                    if (typeof options === 'undefined' || !options.name) {
                         await this.saveLocal(options.path, sp[sp.length - 1], keyRingData.encrypted)
                     }
-                    resolve(await this._kmf.ring.updateData({uuid: keyRingData.uuid,path: options.path, name: sp[sp.length - 1], service: this._medium}));
+                    resolve(await this._kmf.ring.updateData({
+                        uuid: keyRingData.uuid,
+                        path: options.path,
+                        name: sp[sp.length - 1],
+                        service: this._medium
+                    }));
                 }
 
-                if(typeof options !== 'undefined' && options.path){
+                if (typeof options !== 'undefined' && options.path) {
                     keyRingData.path = options.path;
                 }
 
                 if (this._medium === "local" && keyRingData.path === 'local') {
-                    resolve(await this._kmf.ring.updateData({uuid: keyRingData.uuid,path: keyRingData.path, name: keyRingData.name, service: this._medium}));
+                    resolve(await this._kmf.ring.updateData({
+                        uuid: keyRingData.uuid,
+                        path: keyRingData.path,
+                        name: keyRingData.name,
+                        service: this._medium
+                    }));
                 }
 
                 if (this._medium === "cloud") {
                     await this.saveCloud(keyRingData)
-                    resolve(await this._kmf.ring.updateData({uuid: keyRingData.uuid,path: keyRingData.path, name: keyRingData.name, service: this._medium}));
+                    resolve(await this._kmf.ring.updateData({
+                        uuid: keyRingData.uuid,
+                        path: keyRingData.path,
+                        name: keyRingData.name,
+                        service: this._medium
+                    }));
                 }
             } catch (e) {
                 console.error('Unable to save keyring data:', e)
@@ -99,6 +114,29 @@ export class Storage {
 
     }
 
+    download(ringData: KeyRingData, options: { path: string, name?: string }) {
+
+
+        return new Promise(async (resolve, reject) => {
+            try {
+                if (!options.hasOwnProperty('path')) {
+                    throw new Error('Local path for downloading cloud data must be defined')
+                }
+                let name = options.name || ringData.uuid
+                let filePath = options.path
+                const savedPath = await this._restClient.download('/file/' + ringData.path, {path: options.path})
+                resolve(await this._kmf.ring.updateData({
+                    uuid: ringData.uuid,
+                    path: savedPath,
+                    name: name,
+                    service: 'local'
+                }));
+            } catch (e) {
+                reject(e)
+            }
+        })
+    }
+
     private saveLocal(filePath: string, fileName: string, data: string | TypedArray | DataView) {
         return new Promise(async (resolve, reject) => {
             try {
@@ -120,7 +158,8 @@ export class Storage {
                     size: stats.size
                 }
 
-                await this._restClient.multiPartForm('/upload', params)
+                const result = await this._restClient.multiPartForm('/upload', params)
+                console.log(result)
                 resolve(true);
             } catch (e) {
                 reject(e)
@@ -153,7 +192,7 @@ export class Storage {
     }
 
     private async createDir(filePath: string) {
-        await fs.mkdir(filePath, {recursive:true})
+        await fs.mkdir(filePath, {recursive: true})
     }
 
     async load(fileId: string) {

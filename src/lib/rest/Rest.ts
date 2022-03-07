@@ -1,4 +1,5 @@
 import axios, {AxiosInstance, AxiosResponse} from "axios";
+import * as fs from "fs";
 
 const FormData = require('form-data');
 
@@ -26,8 +27,37 @@ class Rest {
         return this._request(endpoint, 'GET', params)
     }
 
-    download(endpoint: string, params?: any) {
-        return this._request(endpoint, 'DOWNLOAD', params)
+    download(endpoint: string, params?: any) :Promise<string> {
+        const config: any = {
+            url: endpoint,
+            headers: this._headers || null,
+            method: 'get',
+            responseType: 'stream'
+        }
+        if (!params.hasOwnProperty('path')) {
+            throw new Error('Local path for downloading cloud data must be defined')
+        }
+
+        const writer = fs.createWriteStream(params.path)
+        config.headers["Content-Type"] = 'application/json'
+
+        return this._instance.request(config).then((response) => {
+            return new Promise((resolve, reject) => {
+                response.data.pipe(writer);
+                let error: null | Error = null;
+                writer.on('error', err => {
+                    error = err;
+                    writer.close();
+                    reject(err);
+                });
+                writer.on('close', () => {
+                    if (!error) {
+                        resolve(params.path);
+                    }
+                });
+            })
+        });
+
     }
 
     put(endpoint: string, params?: any) {
@@ -54,12 +84,6 @@ class Rest {
         if (config.method === 'get') {
             config.params = params;
         }
-
-        if (config.method === 'download') {
-            config.responseType = 'blob'
-            config.method = 'get';
-        }
-
 
         if (config.method !== 'get' && config.method !== 'del' && config.method !== 'form') {
             config.data = params;
