@@ -27,8 +27,13 @@ export const DatabaseGenerator = async (options: any) => {
 ${postfix}`
 
             await fs.writeFile(path.join(prismaStorage, 'schema.prisma'), sqlitePrisma);
-            await run(`${prismaExec} generate --schema "${prismaSchema}"`);
-            await run(`${prismaExec} migrate deploy --schema "${prismaSchema}"`);
+            try {
+
+                await run(`${prismaExec} generate --schema "${prismaSchema}"`);
+                await run(`${prismaExec} migrate deploy --schema "${prismaSchema}"`);
+            }catch (e){
+                console.log(e.message)
+            }
 
         } else if (dbUri.match(/^mongodb/)) {
             await fs.copyFile(path.join(prismaStorage, 'schemas', 'mongo.prisma'), prismaSchema);
