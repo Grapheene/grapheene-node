@@ -75,10 +75,10 @@ class Storage {
                         }));
                     }
                     if (this._medium === "cloud") {
-                        yield this.saveCloud(keyRingData);
+                        const cloudData = yield this.saveCloud(keyRingData);
                         resolve(yield this._kmf.ring.updateData({
                             uuid: keyRingData.uuid,
-                            path: keyRingData.path,
+                            path: cloudData.id,
                             name: keyRingData.name,
                             service: this._medium
                         }));
@@ -146,10 +146,10 @@ class Storage {
             try {
                 let savePath = keyRingData.path;
                 if (keyRingData.path === 'in:memory') {
-                    const dirPath = path_1.default.join(__dirname, '/tmp/' + keyRingData.uuid);
-                    yield fs_1.promises.mkdir(dirPath);
-                    yield fs_1.promises.writeFile(dirPath, keyRingData.encrypted);
-                    savePath = dirPath;
+                    const dirPath = path_1.default.join(__dirname, path_1.default.sep + 'tmp');
+                    yield fs_1.promises.mkdir(dirPath, { recursive: true });
+                    yield fs_1.promises.writeFile(dirPath + path_1.default.sep + keyRingData.uuid, keyRingData.encrypted);
+                    savePath = dirPath + path_1.default.sep + keyRingData.uuid;
                 }
                 const stats = yield fs_1.promises.stat(savePath);
                 const params = {
@@ -157,8 +157,7 @@ class Storage {
                     size: stats.size
                 };
                 const result = yield this._restClient.multiPartForm('/upload', params);
-                console.log(result);
-                resolve(true);
+                resolve(result.data);
             }
             catch (e) {
                 reject(e);

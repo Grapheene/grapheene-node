@@ -96,8 +96,9 @@ export default class Member {
                         encrypted: await encryption.encrypt(dataOrFilePath, await this.getKeys()),
                         service: 'unsaved'
                     }
-                    await this._keyRing.addData(keyRingData)
-                    resolve(keyRingData);
+                    const data = await this._keyRing.addData(keyRingData)
+                    const ringData = {...data, ...keyRingData}
+                    resolve(ringData);
                 }
 
             }
@@ -110,7 +111,9 @@ export default class Member {
                     service: 'local'
                 }
                 await encryption.encryptFile(dataOrFilePath, await this.getKeys());
-                resolve(await this._keyRing.addData(keyRingData));
+                const data = await this._keyRing.addData(keyRingData)
+                const ringData = {...data, ...keyRingData}
+                resolve(ringData);
             }
         })
 

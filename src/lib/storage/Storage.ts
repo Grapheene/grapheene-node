@@ -78,10 +78,10 @@ export class Storage {
                 }
 
                 if (this._medium === "cloud") {
-                    await this.saveCloud(keyRingData)
+                    const cloudData = await this.saveCloud(keyRingData)
                     resolve(await this._kmf.ring.updateData({
                         uuid: keyRingData.uuid,
-                        path: keyRingData.path,
+                        path: cloudData.id,
                         name: keyRingData.name,
                         service: this._medium
                     }));
@@ -149,15 +149,15 @@ export class Storage {
         })
     }
 
-    private saveCloud(keyRingData: KeyRingData) {
+    private saveCloud(keyRingData: KeyRingData): Promise<{id:string}> {
         return new Promise(async (resolve, reject) => {
             try {
                 let savePath = keyRingData.path;
-                if(keyRingData.path === 'in:memory'){
-                    const dirPath = path.join(__dirname, '/tmp/'+keyRingData.uuid);
-                    await fs.mkdir(dirPath);
-                    await fs.writeFile(dirPath, keyRingData.encrypted)
-                    savePath = dirPath
+                if (keyRingData.path === 'in:memory') {
+                    const dirPath = path.join(__dirname, path.sep + 'tmp');
+                    await fs.mkdir(dirPath, {recursive: true})
+                    await fs.writeFile(dirPath + path.sep + keyRingData.uuid, keyRingData.encrypted)
+                    savePath = dirPath + path.sep + keyRingData.uuid
                 }
                 const stats = await fs.stat(savePath);
                 const params = {
@@ -166,8 +166,7 @@ export class Storage {
                 }
 
                 const result = await this._restClient.multiPartForm('/upload', params)
-                console.log(result)
-                resolve(true);
+                resolve(result.data);
             } catch (e) {
                 reject(e)
             }

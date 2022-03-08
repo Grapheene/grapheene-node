@@ -110,8 +110,9 @@ class Member {
                         encrypted: yield encryption.encrypt(dataOrFilePath, yield this.getKeys()),
                         service: 'unsaved'
                     };
-                    yield this._keyRing.addData(keyRingData);
-                    resolve(keyRingData);
+                    const data = yield this._keyRing.addData(keyRingData);
+                    const ringData = Object.assign(Object.assign({}, data), keyRingData);
+                    resolve(ringData);
                 }
             }
             if (this._mode === 'file') {
@@ -122,7 +123,9 @@ class Member {
                     service: 'local'
                 };
                 yield encryption.encryptFile(dataOrFilePath, yield this.getKeys());
-                resolve(yield this._keyRing.addData(keyRingData));
+                const data = yield this._keyRing.addData(keyRingData);
+                const ringData = Object.assign(Object.assign({}, data), keyRingData);
+                resolve(ringData);
             }
         }));
     }
