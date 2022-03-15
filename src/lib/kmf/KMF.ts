@@ -14,6 +14,19 @@ export class KMF {
         this.ring = new KeyRing(this._restClient, this._db);
     }
 
+    async list() {
+        try {
+            const keyRingsRes = await this._restClient.get('/kmf/ring')
+            if (keyRingsRes.status >= 200 && keyRingsRes.status < 300) {
+                return keyRingsRes.data.keyRings
+            } else {
+                console.error('Unable to load keyRings from API')
+            }
+        } catch (e) {
+            console.error('Unable to load keyRings:', e.message)
+        }
+    }
+
     set ring(keyRing) {
         this._ring = keyRing;
     }
