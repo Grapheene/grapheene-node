@@ -24,7 +24,6 @@ class KMF {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 const keyRingsRes = yield this._restClient.get('/kmf/ring');
-                console.log('data:', keyRingsRes.data);
                 if (keyRingsRes.status >= 200 && keyRingsRes.status < 300) {
                     return keyRingsRes.data.keyRings;
                 }
