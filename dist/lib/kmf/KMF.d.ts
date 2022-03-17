@@ -6,6 +6,7 @@ export declare class KMF {
     private readonly _db;
     private _ring;
     constructor(RestClient: Rest, DB: PrismaClient);
+    list(): Promise<any>;
     set ring(keyRing: KeyRing);
     get ring(): KeyRing;
     destroy(): Promise<import("axios").AxiosResponse<any, any>>;
