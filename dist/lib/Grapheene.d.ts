@@ -1,0 +1,32 @@
+import { Zokrates } from "./zk/Zokrates";
+import { KMF } from "./kmf/KMF";
+import { Storage } from "./storage/Storage";
+export declare class Grapheene {
+    private readonly clientId;
+    private readonly apiKey;
+    private readonly token;
+    private readonly filesDir;
+    private readonly zkDir;
+    private readonly cryptoDir;
+    private readonly dbDir;
+    private readonly authDir;
+    private readonly prismaDir;
+    private readonly _options;
+    private _restClient;
+    private _db;
+    private _kmf;
+    private _zk;
+    private _storage;
+    constructor(clientId: string, apiKey: string, token: string, opts?: any);
+    private ensureDirExist;
+    setup(): Promise<boolean>;
+    private setupDb;
+    private setupKMS;
+    private setupStorage;
+    private set zk(value);
+    get zk(): Zokrates;
+    set kmf(kmf: KMF);
+    get kmf(): KMF;
+    set storage(storage: Storage);
+    get storage(): Storage;
+}

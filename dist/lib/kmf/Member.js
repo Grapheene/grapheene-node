@@ -99,6 +99,13 @@ class Member {
             if (this._mode === null) {
                 throw new Error("encrypt must be used with file() or data()");
             }
+            if (this._mode !== 'data') {
+                for (let x in this._keyRing.data) {
+                    if (this._keyRing.data[x].path === dataOrFilePath || this._keyRing.data[x].name === name) {
+                        resolve(this._keyRing.data[x]);
+                    }
+                }
+            }
             if (this._mode === 'data') {
                 if (typeof name === "undefined") {
                     throw new Error("name is required for data mode");
@@ -112,6 +119,7 @@ class Member {
                     };
                     const data = yield this._keyRing.addData(keyRingData);
                     const ringData = Object.assign(Object.assign({}, data), keyRingData);
+                    this._mode = null;
                     resolve(ringData);
                 }
             }
@@ -125,29 +133,62 @@ class Member {
                 yield encryption.encryptFile(dataOrFilePath, yield this.getKeys());
                 const data = yield this._keyRing.addData(keyRingData);
                 const ringData = Object.assign(Object.assign({}, data), keyRingData);
+                this._mode = null;
                 resolve(ringData);
             }
         }));
     }
-    decrypt(keyRingData) {
-        return __awaiter(this, void 0, void 0, function* () {
-            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
-                if (this._mode === null) {
-                    reject("decrypt must be used with file() or data()");
+    decrypt(keyRingData, path) {
+        if (this._mode !== null) {
+            return this.decryptByMode(keyRingData);
+        }
+        return this.decryptByDataObject(keyRingData, path);
+    }
+    decryptByDataObject(keyRingData, path) {
+        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            if (keyRingData.service === 'unsaved' && keyRingData.path === 'in:memory') {
+                if (!keyRingData.encrypted) {
+                    reject("encrypted is required for data mode, are you trying to decrypt and unencrypted object?");
                 }
-                if (this._mode === 'data') {
-                    if (!keyRingData.encrypted) {
-                        reject("encrypted is required for data mode");
-                    }
-                    const result = Object.assign(Object.assign({}, keyRingData), { decrypted: yield encryption.decrypt(keyRingData.encrypted, yield this.getKeys()) });
-                    resolve(result);
+                const result = Object.assign(Object.assign({}, keyRingData), { decrypted: yield encryption.decrypt(keyRingData.encrypted, yield this.getKeys()) });
+                resolve(result);
+            }
+            if (keyRingData.service === 'local') {
+                yield encryption.decryptFile(keyRingData.path, yield this.getKeys());
+                resolve(keyRingData);
+            }
+            if (keyRingData.service === 'cloud' || keyRingData.service === 'cloud:tmp:saved') {
+                if (!path) {
+                    reject("Set the path you would like to use for your temporary storage.");
                 }
-                if (this._mode === 'file') {
-                    yield encryption.decryptFile(keyRingData.path, yield this.getKeys());
-                    resolve(keyRingData);
+                yield this._keyRing.storage.get(keyRingData, { path: path });
+                yield encryption.decryptFile(path, yield this.getKeys());
+                keyRingData.path = path;
+                keyRingData.service = 'cloud:tmp:saved';
+                resolve(keyRingData);
+            }
+        }));
+    }
+    decryptByMode(keyRingData) {
+        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            if (this._mode === null) {
+                this._mode = null;
+                reject("decrypt must be used with file() or data()");
+            }
+            if (this._mode === 'data') {
+                if (!keyRingData.encrypted) {
+                    reject("encrypted is required for data mode, are you trying to decrypt and unencrypted object?");
                 }
-            }));
-        });
+                const result = Object.assign(Object.assign({}, keyRingData), { decrypted: yield encryption.decrypt(keyRingData.encrypted, yield this.getKeys()) });
+                this._mode = null;
+                resolve(result);
+            }
+            if (this._mode === 'file') {
+                yield encryption.decryptFile(keyRingData.path, yield this.getKeys());
+                this._mode = null;
+                resolve(keyRingData);
+            }
+        }));
     }
     get keys() {
         return this._keys;
