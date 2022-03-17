@@ -165,9 +165,22 @@ class KeyRing {
                     }
                 }
                 dataResponse = new KeyRingData_1.default(result.data.ringData);
-                data.push(dataResponse);
-                this.data = data;
-                return data;
+                let response;
+                this.data = data.map((item) => {
+                    if (item.uuid === request.uuid) {
+                        item.name = dataResponse.name;
+                        item.service = dataResponse.service;
+                        item.path = dataResponse.path;
+                        response = {
+                            uuid: request.uuid,
+                            name: dataResponse.name,
+                            path: dataResponse.path,
+                            service: dataResponse.service,
+                        };
+                    }
+                    return item;
+                });
+                return response;
             }
             else {
                 throw new Error(result.statusText);

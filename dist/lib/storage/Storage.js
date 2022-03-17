@@ -46,30 +46,66 @@ class Storage {
             if (typeof options !== 'undefined' && options.name) {
                 keyRingData.name = options.name;
             }
+            let originPath = keyRingData.path;
             return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
                 try {
+                    if (this._medium === null) {
+                        throw new Error('local() or cloud() medium must be selected');
+                    }
                     if (this._medium === "local" && keyRingData.path === 'in:memory') {
                         if (typeof options === 'undefined' || !options.path) {
                             throw new Error("Filepath is required for data");
                         }
                         const sp = options.path.split(path_1.default.sep);
                         if (typeof options === 'undefined' || !options.name) {
-                            yield this.saveLocal(options.path, sp[sp.length - 1], keyRingData.encrypted);
+                            // For data we write clear text to file then encrypt the file
+                            const member = this._kmf.ring.members[0];
+                            let data = yield member.decrypt(keyRingData);
+                            yield this.saveLocal(options.path, sp[sp.length - 1], data.decrypted);
+                            yield member.file().encrypt(options.path);
                         }
-                        resolve(yield this._kmf.ring.updateData({ uuid: keyRingData.uuid, path: options.path, name: sp[sp.length - 1], service: this._medium }));
+                        resolve(yield this._kmf.ring.updateData({
+                            uuid: keyRingData.uuid,
+                            path: options.path,
+                            name: sp[sp.length - 1],
+                            service: this._medium
+                        }));
                     }
-                    if (typeof options !== 'undefined' && options.path) {
-                        keyRingData.path = options.path;
-                    }
-                    if (this._medium === "local" && keyRingData.path === 'local') {
-                        resolve(yield this._kmf.ring.updateData({ uuid: keyRingData.uuid, path: keyRingData.path, name: keyRingData.name, service: this._medium }));
+                    if (this._medium === "local" && originPath !== 'in:memory') {
+                        let path;
+                        if (keyRingData.service === 'cloud') {
+                            path = yield this.get(keyRingData, { path: options.path });
+                            yield this.deleteCloud(keyRingData.path);
+                        }
+                        resolve(yield this._kmf.ring.updateData({
+                            uuid: keyRingData.uuid,
+                            path: path || options.path,
+                            name: keyRingData.name,
+                            service: this._medium
+                        }));
                     }
                     if (this._medium === "cloud") {
-                        yield this.saveCloud(keyRingData);
-                        resolve(yield this._kmf.ring.updateData({ uuid: keyRingData.uuid, path: keyRingData.path, name: keyRingData.name, service: this._medium }));
+                        if (originPath === 'in:memory') {
+                            const sp = options.path.split(path_1.default.sep);
+                            const member = this._kmf.ring.members[0];
+                            keyRingData.path = originPath;
+                            let data = yield member.decrypt(keyRingData);
+                            yield this.saveLocal(options.path, sp[sp.length - 1], data.decrypted);
+                            keyRingData = yield member.file().encrypt(options.path);
+                            keyRingData.service = 'local';
+                        }
+                        const cloudData = yield this.saveCloud(keyRingData);
+                        resolve(yield this._kmf.ring.updateData({
+                            uuid: keyRingData.uuid,
+                            path: cloudData.id,
+                            name: keyRingData.name,
+                            service: this._medium
+                        }));
                     }
+                    this._medium = null;
                 }
                 catch (e) {
+                    this._medium = null;
                     console.error('Unable to save keyring data:', e);
                     reject(e);
                 }
@@ -84,9 +120,45 @@ class Storage {
                     yield this.deleteLocal(ringData.path, ringData.name);
                 }
                 if (ringData.service === "cloud") {
-                    // await this.deleteCloud(filePath, data)
+                    yield this.deleteCloud(ringData.uuid);
                 }
                 resolve(true);
+            }
+            catch (e) {
+                reject(e);
+            }
+        }));
+    }
+    download(ringData, options) {
+        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                if (!options.hasOwnProperty('path')) {
+                    throw new Error('Local path for downloading cloud data must be defined');
+                }
+                let name = options.name || ringData.name;
+                let filePath = options.path;
+                const savedPath = yield this._restClient.download('/file/' + ringData.uuid, { path: filePath });
+                resolve(yield this._kmf.ring.updateData({
+                    uuid: ringData.uuid,
+                    path: savedPath,
+                    name: name,
+                    service: 'local'
+                }));
+            }
+            catch (e) {
+                reject(e);
+            }
+        }));
+    }
+    get(ringData, options) {
+        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                if (!options.hasOwnProperty('path')) {
+                    throw new Error('Local path for downloading cloud data must be defined');
+                }
+                let filePath = options.path;
+                const savedPath = yield this._restClient.download('/file/' + ringData.path, { path: filePath });
+                resolve(savedPath);
             }
             catch (e) {
                 reject(e);
@@ -96,8 +168,9 @@ class Storage {
     saveLocal(filePath, fileName, data) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             try {
+                filePath = filePath.replace(path_1.default.sep + fileName, '');
                 yield fs_1.promises.mkdir(filePath, { recursive: true });
-                yield fs_1.promises.writeFile(filePath + path_1.default.sep + fileName, data);
+                yield fs_1.promises.writeFile(filePath + path_1.default.sep + fileName, data, { encoding: 'utf8' });
                 resolve(true);
             }
             catch (e) {
@@ -108,13 +181,15 @@ class Storage {
     saveCloud(keyRingData) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const stats = yield fs_1.promises.stat(keyRingData.path);
+                let savePath = keyRingData.path;
+                const stats = yield fs_1.promises.stat(savePath);
                 const params = {
-                    file: (0, fs_1.createReadStream)(keyRingData.path),
+                    file: (0, fs_1.createReadStream)(savePath),
                     size: stats.size
                 };
-                yield this._restClient.multiPartForm('/upload', params);
-                resolve(true);
+                const result = yield this._restClient.multiPartForm('/upload', params);
+                yield fs_1.promises.unlink(savePath);
+                resolve(result.data);
             }
             catch (e) {
                 reject(e);
@@ -124,7 +199,7 @@ class Storage {
     deleteCloud(fileId) {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             try {
-                yield this._restClient.del('/files/' + fileId);
+                yield this._restClient.del('/file/' + fileId);
             }
             catch (e) {
                 reject(e);

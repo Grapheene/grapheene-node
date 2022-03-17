@@ -1,0 +1,33 @@
+import { PrismaClient } from "@prisma/client";
+import Member from "./Member";
+import KeyRingData from "./KeyRingData";
+import { KeyRingDataRequest, KeyRingOptions, MemberOptions } from "../../../index";
+import Rest from "../rest/Rest";
+import { Storage } from "../storage/Storage";
+export default class KeyRing {
+    uuid: string;
+    uniqueName: string;
+    name: string;
+    data: Array<KeyRingData>;
+    members: Array<Member>;
+    createdAt: string;
+    updatedAt: string;
+    private _master;
+    private _storage;
+    private readonly _restClient;
+    private readonly _db;
+    constructor(restClient: Rest, DB: PrismaClient, options?: KeyRingOptions);
+    private setOptions;
+    create(name: string): Promise<this>;
+    load(uuid: string): Promise<this>;
+    getMember(nameOrUUID: string): Member;
+    addMember(data: MemberOptions): Promise<Member>;
+    delMember(nameOrUUID: string): Promise<void>;
+    getData(nameOrUUID: string): KeyRingData;
+    addData(request: KeyRingDataRequest): Promise<KeyRingData>;
+    updateData(request: KeyRingData): Promise<KeyRingData>;
+    delData(nameOrUUID: string): Promise<void>;
+    private enableMemberStorage;
+    set storage(storage: Storage);
+    get storage(): Storage;
+}

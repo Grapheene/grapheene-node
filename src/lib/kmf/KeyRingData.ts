@@ -6,7 +6,7 @@ export default class KeyRingData {
     name: string;
     path: string;
     encrypted?: string;
-    service: 'cloud' | 'local' | 'unsaved';
+    service: 'cloud' | 'local' | 'unsaved' | 'cloud:tmp:saved';
 
     constructor(options:KeyRingData) {
 
