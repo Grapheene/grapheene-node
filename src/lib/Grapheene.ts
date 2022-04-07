@@ -19,7 +19,7 @@ const defaults = {
         migrate: false
     },
 }
-
+// TODO: create Grapheene class interface
 export class Grapheene {
     private readonly clientId: string;
     private readonly apiKey: string;

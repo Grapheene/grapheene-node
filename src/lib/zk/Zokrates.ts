@@ -35,7 +35,7 @@ export class Zokrates {
     }
 
     async setup() {
-        await this.setPaths(this._optionsPath)
+        await this.setPaths(this._optionsPath) // TODO: no error handling in this or the called function
         if (!await this.filesExist()) {
             await this.getZkFiles(() => {
                 const fields = this.getZkFields();
@@ -53,7 +53,8 @@ export class Zokrates {
             return false
         }
     }
-
+    
+    // TODO: should we be using the reject function here. 
     private getZkFiles(callback: Function) {
         return new Promise(async (resolve, reject) => {
             console.log('Downloading Necessary Proof Files...')

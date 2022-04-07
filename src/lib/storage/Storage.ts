@@ -1,9 +1,9 @@
 import Rest from "../rest/Rest";
 import TypedArray = NodeJS.TypedArray;
-import {KMF} from "../kmf/KMF";
-import {KeyRingDataOptions, KeyRingDataRequest, StorageOptions} from "../../../index";
+import { KMF } from "../kmf/KMF";
+import { KeyRingDataOptions, KeyRingDataRequest, StorageOptions } from "../../../index";
 import KeyRingData from "../kmf/KeyRingData";
-import {promises as fs, createReadStream} from 'fs';
+import { promises as fs, createReadStream } from 'fs';
 import path from 'path';
 
 
@@ -75,8 +75,8 @@ export class Storage {
 
                 if (this._medium === "local" && originPath !== 'in:memory') {
                     let path;
-                    if(keyRingData.service === 'cloud'){
-                        path = await this.get(keyRingData, {path: options.path})
+                    if (keyRingData.service === 'cloud') {
+                        path = await this.get(keyRingData, { path: options.path })
                         await this.deleteCloud(keyRingData.path)
                     }
 
@@ -89,7 +89,7 @@ export class Storage {
                 }
 
                 if (this._medium === "cloud") {
-                    if(originPath === 'in:memory') {
+                    if (originPath === 'in:memory') {
 
                         const sp = options.path.split(path.sep);
                         const member = this._kmf.ring.members[0];
@@ -147,7 +147,7 @@ export class Storage {
                 }
                 let name = options.name || ringData.name
                 let filePath = options.path
-                const savedPath = await this._restClient.download('/file/' + ringData.uuid, {path: filePath})
+                const savedPath = await this._restClient.download('/file/' + ringData.uuid, { path: filePath })
                 resolve(await this._kmf.ring.updateData({
                     uuid: ringData.uuid,
                     path: savedPath,
@@ -160,7 +160,7 @@ export class Storage {
         })
     }
 
-    get(ringData: KeyRingData, options: { path: string, name?: string }) : Promise<string> {
+    get(ringData: KeyRingData, options: { path: string, name?: string }): Promise<string> {
 
 
         return new Promise(async (resolve, reject) => {
@@ -169,7 +169,7 @@ export class Storage {
                     throw new Error('Local path for downloading cloud data must be defined')
                 }
                 let filePath = options.path
-                const savedPath = await this._restClient.download('/file/' + ringData.path, {path: filePath})
+                const savedPath = await this._restClient.download('/file/' + ringData.path, { path: filePath })
                 resolve(savedPath)
             } catch (e) {
                 reject(e)
@@ -181,8 +181,8 @@ export class Storage {
         return new Promise(async (resolve, reject) => {
             try {
                 filePath = filePath.replace(path.sep + fileName, '')
-                await fs.mkdir(filePath, {recursive: true})
-                await fs.writeFile(filePath + path.sep + fileName, data, {encoding: 'utf8'});
+                await fs.mkdir(filePath, { recursive: true })
+                await fs.writeFile(filePath + path.sep + fileName, data, { encoding: 'utf8' });
                 resolve(true)
             } catch (e) {
                 reject(e)
@@ -234,11 +234,10 @@ export class Storage {
     }
 
     private async createDir(filePath: string) {
-        await fs.mkdir(filePath, {recursive: true})
+        await fs.mkdir(filePath, { recursive: true })
     }
 
     async load(fileId: string) {
-
         return this;
     }
 

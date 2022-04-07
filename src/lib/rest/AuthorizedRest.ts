@@ -46,6 +46,8 @@ class AuthorizedRest extends Rest {
         }
     }
 
+    // TODO: this.ensureHeaders(); is not being caught
+
     async post(endpoint: string, params?: any) {
         await this.ensureHeaders();
         return super.post(endpoint, params)

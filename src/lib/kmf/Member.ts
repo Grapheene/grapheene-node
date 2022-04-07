@@ -80,6 +80,7 @@ export default class Member {
         return this;
     }
 
+    // TODO: take a look at using the reject function here. 
     encrypt(dataOrFilePath: any, name?: string): Promise<KeyRingData | KeyRingDataRequest> {
         return new Promise(async (resolve, reject) => {
             if (this._mode === null) {

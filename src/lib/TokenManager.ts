@@ -36,6 +36,7 @@ export class TokenManager {
         })() as unknown as TokenManager;
     }
 
+    // TODO: await is doing nothing here
     async getAuth(proof: string) {
         return await this.getToken(this._clientId, proof);
     }
