@@ -30,7 +30,6 @@ class TokenManager {
             try {
                 yield fs_1.promises.mkdir(this._authDir, { recursive: true });
                 this._restClient = new Rest_1.default(config.baseUrl);
-                console.log('created token manager rest');
                 yield this.getToken(this._clientId, this._proof);
                 yield this.loadToken(this._clientId, this._proof);
                 return resolve(true);
