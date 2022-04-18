@@ -23,8 +23,12 @@ const DatabaseGenerator = (options) => __awaiter(void 0, void 0, void 0, functio
     const setupDb = (options) => __awaiter(void 0, void 0, void 0, function* () {
         const prismaSchema = path_1.default.join(Paths_1.prismaStorage, 'schema.prisma');
         // Only remove the prisma schema if it exists
-        if ((0, fs_1.existsSync)(prismaSchema)) {
+        try {
+            yield fs_1.promises.access(prismaSchema, fs_1.constants.F_OK);
             yield fs_1.promises.unlink(prismaSchema);
+        }
+        catch (e) {
+            // do nothing
         }
         process.stdout.write('\rSetting up the database...');
         try {

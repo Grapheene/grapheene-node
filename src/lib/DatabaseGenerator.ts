@@ -1,5 +1,5 @@
 import path from 'path';
-import {constants as fsConstants, promises as fs,existsSync} from 'fs';
+import {constants as fsConstants, promises as fs} from 'fs';
 import {execSync as exec, spawnSync as spawn} from "child_process";
 import {prismaClient, prismaExec, prismaStorage} from './shared/Paths'
 
@@ -11,8 +11,11 @@ export const DatabaseGenerator = async (options: any) => {
             const prismaSchema = path.join(prismaStorage, 'schema.prisma');
 
             // Only remove the prisma schema if it exists
-            if (existsSync(prismaSchema)) {
+            try {
+                await fs.access(prismaSchema, fsConstants.F_OK);
                 await fs.unlink(prismaSchema)
+            } catch (e) {
+                // do nothing
             }
 
             process.stdout.write('\rSetting up the database...');
