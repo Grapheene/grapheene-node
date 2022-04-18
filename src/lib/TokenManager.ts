@@ -32,6 +32,7 @@ export class TokenManager {
                 await fs.mkdir(this._authDir, {recursive: true})
                 this._restClient = new Rest(config.baseUrl);
                 console.log('created token manager rest')
+                await this.getToken(this._clientId, this._proof)
                 await this.loadToken(this._clientId, this._proof);
                 return resolve(true)
             } catch (err) {
