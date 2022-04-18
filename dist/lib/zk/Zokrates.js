@@ -202,7 +202,6 @@ class Zokrates {
     }
     spawn(command, args, options) {
         return new Promise((resolve, reject) => {
-            console.log(`${command} ${args.join(' ')}`);
             let childProcess = spawn(command, args, options);
             let std_out = '';
             let std_err = '';
