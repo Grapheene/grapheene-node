@@ -1,7 +1,6 @@
-import createEmitter from "./EventFactory";
 import {TokenManagerOptions} from "../../index";
 import Rest from "./rest/Rest";
-import {constants as fsConstants, promises as fs} from 'fs';
+import {promises as fs} from 'fs';
 
 const config = require('../../config.json')
 const jwt = require('jsonwebtoken')
@@ -31,7 +30,6 @@ export class TokenManager {
             try {
                 await fs.mkdir(this._authDir, {recursive: true})
                 this._restClient = new Rest(config.baseUrl);
-                console.log('created token manager rest')
                 await this.getToken(this._clientId, this._proof)
                 await this.loadToken(this._clientId, this._proof);
                 return resolve(true)

@@ -26,7 +26,6 @@ class AuthorizedRest extends Rest {
         return new Promise(async (resolve, reject) => {
             try {
 
-                console.log('Creating token manager!')
                 this.tokenManager = new TokenManager(this._clientId, {
                     proof: JSON.stringify(this.zk.generateProof()),
                     authDir: this._authDir,
@@ -34,7 +33,6 @@ class AuthorizedRest extends Rest {
                 })
                 console.log('Token Manager created!')
                 await this.tokenManager.init();
-                console.log('Token Manager init!')
                 this.updateRestHeaders({
                     Token: this.tokenManager.jwt,
                     Key: JSON.stringify(this.tokenManager.publicKey)
