@@ -104,7 +104,8 @@ export class Grapheene {
                 rest: new Rest(config.baseUrl)
             });
             await this.zk.setup();
-            this._restClient = await new AuthorizedRest(config.baseUrl, this.clientId, this.zk, this.authDir);
+            this._restClient = new AuthorizedRest(config.baseUrl, this.clientId, this.zk, this.authDir);
+            await this._restClient.init();
             await this.setupDb()
             this.setupKMS()
             this.setupStorage()

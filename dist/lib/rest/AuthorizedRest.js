@@ -22,19 +22,33 @@ function sleep(ms) {
 class AuthorizedRest extends Rest_1.default {
     constructor(base_url, clientId, zk, authDir) {
         super(base_url);
-        return (() => __awaiter(this, void 0, void 0, function* () {
-            this.zk = zk;
-            this.tokenManager = yield new TokenManager_1.TokenManager(clientId, {
-                proof: JSON.stringify(this.zk.generateProof()),
-                authDir: authDir,
-                onUpdate: this.updateRestHeaders
-            });
-            this.updateRestHeaders({
-                Token: this.tokenManager.jwt,
-                Key: JSON.stringify(this.tokenManager.publicKey)
-            });
-            return this;
-        }))();
+        this.zk = zk;
+        this._clientId = clientId;
+        this._authDir = authDir;
+    }
+    init() {
+        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                console.log('Creating token manager!');
+                this.tokenManager = new TokenManager_1.TokenManager(this._clientId, {
+                    proof: JSON.stringify(this.zk.generateProof()),
+                    authDir: this._authDir,
+                    onUpdate: this.updateRestHeaders
+                });
+                console.log('Token Manager created!');
+                yield this.tokenManager.init();
+                console.log('Token Manager init!');
+                this.updateRestHeaders({
+                    Token: this.tokenManager.jwt,
+                    Key: JSON.stringify(this.tokenManager.publicKey)
+                });
+                resolve(true);
+            }
+            catch (e) {
+                console.log(e);
+                reject(e);
+            }
+        }));
     }
     updateRestHeaders(headers) {
         super.setHeaders(headers);

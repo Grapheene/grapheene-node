@@ -12,22 +12,40 @@ function sleep(ms: number) {
 class AuthorizedRest extends Rest {
     private tokenManager: TokenManager;
     private zk: Zokrates;
+    readonly _clientId: string;
+    readonly _authDir: string;
 
     constructor(base_url: string, clientId: string, zk: Zokrates, authDir: string) {
         super(base_url)
-        return (async () => {
-            this.zk = zk;
-            this.tokenManager = await new TokenManager(clientId, {
-                proof: JSON.stringify(this.zk.generateProof()),
-                authDir: authDir,
-                onUpdate: this.updateRestHeaders
-            })
-            this.updateRestHeaders({
-                Token: this.tokenManager.jwt,
-                Key: JSON.stringify(this.tokenManager.publicKey)
-            });
-            return this
-        })() as unknown as AuthorizedRest
+        this.zk = zk;
+        this._clientId = clientId;
+        this._authDir = authDir;
+    }
+
+    init() {
+        return new Promise(async (resolve, reject) => {
+            try {
+
+                console.log('Creating token manager!')
+                this.tokenManager = new TokenManager(this._clientId, {
+                    proof: JSON.stringify(this.zk.generateProof()),
+                    authDir: this._authDir,
+                    onUpdate: this.updateRestHeaders
+                })
+                console.log('Token Manager created!')
+                await this.tokenManager.init();
+                console.log('Token Manager init!')
+                this.updateRestHeaders({
+                    Token: this.tokenManager.jwt,
+                    Key: JSON.stringify(this.tokenManager.publicKey)
+                });
+                resolve(true)
+            } catch (e) {
+                console.log(e)
+                reject(e)
+            }
+        })
+
     }
 
     private updateRestHeaders(headers: AuthHeaders) {

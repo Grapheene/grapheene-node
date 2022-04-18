@@ -18,46 +18,48 @@ export class TokenManager {
     ready: boolean = false
 
     constructor(clientId: string, options: TokenManagerOptions) {
-        return (async () => {
-            this._clientId = clientId;
-            this._proof = options.proof;
-            this._onUpdate = options.onUpdate;
-            this._authDir = options.authDir;
 
+        this._clientId = clientId;
+        this._proof = options.proof;
+        this._onUpdate = options.onUpdate;
+        this._authDir = options.authDir;
+
+    }
+
+    init() {
+        return new Promise(async (resolve, reject) => {
             try {
                 await fs.mkdir(this._authDir, {recursive: true})
                 this._restClient = new Rest(config.baseUrl);
+                console.log('created token manager rest')
                 await this.loadToken(this._clientId, this._proof);
-                return this
+                return resolve(true)
             } catch (err) {
                 console.error('Unable to create TokenManager authDir:', err);
-                return false
+                return reject(err)
             }
-        })() as unknown as TokenManager;
+        })
+
     }
 
     async getAuth(proof: string) {
         return await this.getToken(this._clientId, proof);
     }
 
-    private async loadToken(clientId: string, proof: string) {
-        return new Promise<void>(async (resolve, reject) => {
+    private loadToken(clientId: string, proof: string) {
+
+        return new Promise(async (resolve, reject) => {
             try {
                 const tokenFile = `${this._authDir}/token`
                 const rsaFile = `${this._authDir}/rsa`
-
-                await fs.access(tokenFile, fsConstants.F_OK)
-                await fs.access(rsaFile, fsConstants.F_OK)
-
                 const token = await fs.readFile(tokenFile, 'utf8')
                 const rsa = await fs.readFile(rsaFile, 'utf8')
-
                 jwt.verify(token, rsa, {algorithms: ['RS256']}, async (err: Error, decoded: any) => {
                     if (err) {
                         if (err.message === 'jwt expired') {
                             console.log('Refreshing JWT...')
                             await this.auth(this._clientId, this._proof)
-                            return resolve()
+                            return resolve(true)
                         } else {
                             console.error('Unable to verify token:', err.message)
                             return reject(err.message)
@@ -67,18 +69,19 @@ export class TokenManager {
                         if (decoded.exp - unixtime <= 300) {
                             console.log('Refreshing JWT...')
                             await this.auth(this._clientId, this._proof)
-                            return resolve()
+                            return resolve(true)
                         } else {
                             this._token = token;
                             this._rsa = rsa;
                             this._onUpdate({Token: this._token, Key: this._rsa})
                             this.ready = true;
-                            return resolve()
+                            return resolve(true)
                         }
                     }
                 });
             } catch (e) {
                 // ignore error
+                console.log(e)
                 await this.getToken(clientId, proof)
                 this.ready = true
             }

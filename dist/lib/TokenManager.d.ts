@@ -10,6 +10,7 @@ export declare class TokenManager {
     private _restClient;
     ready: boolean;
     constructor(clientId: string, options: TokenManagerOptions);
+    init(): Promise<unknown>;
     getAuth(proof: string): Promise<import("axios").AxiosResponse<any, any>>;
     private loadToken;
     private getToken;

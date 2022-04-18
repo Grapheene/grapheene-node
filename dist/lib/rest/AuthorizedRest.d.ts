@@ -3,7 +3,10 @@ import { Zokrates } from "../zk/Zokrates";
 declare class AuthorizedRest extends Rest {
     private tokenManager;
     private zk;
+    readonly _clientId: string;
+    readonly _authDir: string;
     constructor(base_url: string, clientId: string, zk: Zokrates, authDir: string);
+    init(): Promise<unknown>;
     private updateRestHeaders;
     ensureHeaders(): Promise<void>;
     post(endpoint: string, params?: any): Promise<import("axios").AxiosResponse<any, any>>;

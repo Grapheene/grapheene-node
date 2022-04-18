@@ -38,6 +38,7 @@ const stream = __importStar(require("stream"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = require("fs");
 const exec = require("child_process").execSync;
+const spawn = require("child_process").spawn;
 let dir = path_1.default.dirname(__dirname);
 class Zokrates {
     constructor(clientId, apiKey, token, options) {
@@ -51,15 +52,29 @@ class Zokrates {
         this._optionsPath = options.path;
     }
     setup() {
-        return __awaiter(this, void 0, void 0, function* () {
-            yield this.setPaths(this._optionsPath);
-            if (!(yield this.filesExist())) {
-                yield this.getZkFiles(() => {
-                    const fields = this.getZkFields();
-                    this.computeWitness(fields[0], fields[1], fields[2], fields[3]);
-                });
+        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                return this.setPaths(this._optionsPath).then(() => __awaiter(this, void 0, void 0, function* () {
+                    if (!(yield this.filesExist())) {
+                        this.getZkFiles().then(() => __awaiter(this, void 0, void 0, function* () {
+                            const fields = this.getZkFields();
+                            console.log('Computing witness files.');
+                            yield this.computeWitness(fields[0], fields[1], fields[2], fields[3]);
+                            console.log('Witness file computation complete.');
+                            return resolve(true);
+                        }));
+                    }
+                    else {
+                        console.log('This client has already been setup.');
+                        return resolve(true);
+                    }
+                }));
             }
-        });
+            catch (e) {
+                console.error('Error: \n', e);
+                return reject(e);
+            }
+        }));
     }
     filesExist() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -73,7 +88,7 @@ class Zokrates {
             }
         });
     }
-    getZkFiles(callback) {
+    getZkFiles() {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             console.log('Downloading Necessary Proof Files...');
             const finishedDownload = (0, util_1.promisify)(stream.finished);
@@ -133,8 +148,7 @@ class Zokrates {
                 }
                 process.stdout.write('\n');
                 console.log('Download Complete.');
-                callback();
-                resolve(true);
+                return resolve(true);
             }));
         }));
     }
@@ -171,11 +185,11 @@ class Zokrates {
         });
     }
     run(command) {
-        const buff = exec(command);
+        const buff = exec(command, { timeout: 5000 });
         const result = buff.toString();
         const retObj = {
-            error: null,
-            result: null
+            error: false,
+            result: false
         };
         if (result.match(/^error/i)) {
             retObj.error = result;
@@ -185,6 +199,36 @@ class Zokrates {
             retObj.result = result;
             return retObj;
         }
+    }
+    spawn(command, args, options) {
+        return new Promise((resolve, reject) => {
+            console.log(`${command} ${args.join(' ')}`);
+            let childProcess = spawn(command, args, options);
+            let std_out = '';
+            let std_err = '';
+            childProcess.stdout.on('data', function (data) {
+                std_out += data.toString();
+                console.log(data.toString());
+            });
+            childProcess.stderr.on('data', function (data) {
+                std_err += data.toString();
+                console.error(data.toString());
+            });
+            childProcess.on('close', (code) => {
+                if (code === 0) {
+                    console.log(`exit_code = ${code}`);
+                    return resolve(std_out);
+                }
+                else {
+                    console.warn(`exit_code = ${code}`);
+                    return reject(std_err);
+                }
+            });
+            childProcess.on('error', (error) => {
+                std_err += error.toString();
+                console.error(error.toString());
+            });
+        });
     }
     generateProof() {
         const command = `${this._execPath} generate-proof --input=${this._storePath}${path_1.default.sep}out --proving-key-path=${this._storePath}${path_1.default.sep}proving.key --witness=${this._storePath}${path_1.default.sep}witness --proof-path=${this._storePath}${path_1.default.sep}proof.json`;
@@ -196,12 +240,17 @@ class Zokrates {
         return false;
     }
     computeWitness(field1, field2, field3, field4) {
-        const command = this._execPath + `compute-witness -a ${field1} ${field2} ${field3} ${field4} --input=${this._storePath}${path_1.default.sep}out --output=${this._storePath}${path_1.default.sep}witness`;
-        const computeWitness = this.run(command);
-        if (!computeWitness.error) {
-            return computeWitness.result;
-        }
-        return false;
+        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            try {
+                const command = this._execPath + `compute-witness`;
+                yield this.spawn(command, [`-a ${field1} ${field2} ${field3} ${field4}`, `--input=${this._storePath}${path_1.default.sep}out`, `   --output=${this._storePath}${path_1.default.sep}witness`], { shell: true });
+                return resolve(true);
+            }
+            catch (e) {
+                console.error(e);
+                reject(e);
+            }
+        }));
     }
     stringToNumberChunks(v) {
         const split = v.split('');
