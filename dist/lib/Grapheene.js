@@ -95,11 +95,8 @@ class Grapheene {
                     rest: new Rest_1.default(config.baseUrl)
                 });
                 yield this.zk.setup();
-                console.log('ZK Setup!');
                 this._restClient = new AuthorizedRest_1.default(config.baseUrl, this.clientId, this.zk, this.authDir);
-                console.log('Rest Client created!!');
                 yield this._restClient.init();
-                console.log('Rest Client init!!');
                 yield this.setupDb();
                 this.setupKMS();
                 this.setupStorage();

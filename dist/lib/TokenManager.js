@@ -31,6 +31,7 @@ class TokenManager {
                 yield fs_1.promises.mkdir(this._authDir, { recursive: true });
                 this._restClient = new Rest_1.default(config.baseUrl);
                 console.log('created token manager rest');
+                yield this.getToken(this._clientId, this._proof);
                 yield this.loadToken(this._clientId, this._proof);
                 return resolve(true);
             }
@@ -46,20 +47,13 @@ class TokenManager {
         });
     }
     loadToken(clientId, proof) {
-        console.log('here');
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             try {
                 const tokenFile = `${this._authDir}/token`;
                 const rsaFile = `${this._authDir}/rsa`;
-                console.log(tokenFile, rsaFile);
-                //await fs.access(tokenFile, fsConstants.F_OK)
-                //await fs.access(rsaFile, fsConstants.F_OK)
-                console.log('here');
                 const token = yield fs_1.promises.readFile(tokenFile, 'utf8');
                 const rsa = yield fs_1.promises.readFile(rsaFile, 'utf8');
-                console.log(token, rsa);
                 jwt.verify(token, rsa, { algorithms: ['RS256'] }, (err, decoded) => __awaiter(this, void 0, void 0, function* () {
-                    console.log(err, decoded);
                     if (err) {
                         if (err.message === 'jwt expired') {
                             console.log('Refreshing JWT...');
