@@ -13,12 +13,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Grapheene = void 0;
-const AuthorizedRest_1 = __importDefault(require("./rest/AuthorizedRest"));
 const Zokrates_1 = require("./zk/Zokrates");
 const KMF_1 = require("./kmf/KMF");
 const Storage_1 = require("./storage/Storage");
 const DatabaseGenerator_1 = require("./DatabaseGenerator");
 const Rest_1 = __importDefault(require("./rest/Rest"));
+const AuthorizedRest_1 = __importDefault(require("./rest/AuthorizedRest"));
 const fs_1 = require("fs");
 const path_1 = __importDefault(require("path"));
 const Paths_1 = require("./shared/Paths");
@@ -39,15 +39,12 @@ class Grapheene {
         this.token = token;
         this.filesDir = process.cwd() + path_1.default.sep + this._options.projectDir + path_1.default.sep + this.clientId + path_1.default.sep + 'files';
         this.prismaDir = path_1.default.dirname(__dirname).replace(/(dist.*)/, 'prisma');
-        /*
-        if (!this.apiKey.startsWith('SK') || !this.apiKey) {
-            throw new Error('Invalid APK Key')
+        if (!this.apiKey.startsWith('CK') || !this.apiKey) {
+            throw new Error('Invalid APK Key');
         }
-
-        if (!this.clientId.startsWith('US') || !this.clientId) {
-            throw new Error('Invalid Client ID')
+        if (!this.clientId.startsWith('CL') || !this.clientId) {
+            throw new Error('Invalid Client ID');
         }
-        */
         this.zkDir = this.filesDir + path_1.default.sep + 'zk';
         this.cryptoDir = this.filesDir + path_1.default.sep + 'encrypt';
         this.dbDir = this.filesDir + path_1.default.sep + 'db';
