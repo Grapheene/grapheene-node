@@ -13,15 +13,30 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const Rest_1 = __importDefault(require("./Rest"));
-const TokenManager_1 = require("../TokenManager");
-function sleep(ms) {
-    return new Promise((resolve) => {
-        setTimeout(resolve, ms);
-    });
-}
+const fs_1 = require("fs");
+const axios_1 = __importDefault(require("axios"));
+const jwt = require('jsonwebtoken');
 class AuthorizedRest extends Rest_1.default {
     constructor(base_url, clientId, zk, authDir) {
         super(base_url);
+        this.refreshJWT = () => {
+            return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+                try {
+                    const result = yield this.auth('/auth', 'POST', { uuid: this._clientId, proof: JSON.stringify(this.zk.generateProof()) });
+                    this._token = result.data.token;
+                    this._rsa = result.data.publicKey;
+                    yield fs_1.promises.writeFile(`${this._authDir}/token`, this._token);
+                    yield fs_1.promises.writeFile(`${this._authDir}/rsa`, this._rsa);
+                    this.updateRestHeaders({ Token: this._token, Key: JSON.stringify(this._rsa) });
+                    return resolve({ Token: this._token, Key: this._rsa });
+                }
+                catch (err) {
+                    console.error('Unable to refresh JWT:', err);
+                    return reject(err);
+                }
+            }));
+        };
+        this._base_url = base_url;
         this.zk = zk;
         this._clientId = clientId;
         this._authDir = authDir;
@@ -29,17 +44,15 @@ class AuthorizedRest extends Rest_1.default {
     init() {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             try {
-                this.tokenManager = new TokenManager_1.TokenManager(this._clientId, {
-                    proof: JSON.stringify(this.zk.generateProof()),
-                    authDir: this._authDir,
-                    onUpdate: this.updateRestHeaders
-                });
-                console.log('Token Manager created!');
-                yield this.tokenManager.init();
-                this.updateRestHeaders({
-                    Token: this.tokenManager.jwt,
-                    Key: JSON.stringify(this.tokenManager.publicKey)
-                });
+                const tokenFile = `${this._authDir}/token`;
+                const rsaFile = `${this._authDir}/rsa`;
+                this._token = yield fs_1.promises.readFile(tokenFile, 'utf8');
+                this._rsa = yield fs_1.promises.readFile(rsaFile, 'utf8');
+                const valid = yield this.isJWTValid();
+                if (valid === 'warn' || !valid) {
+                    yield this.refreshJWT();
+                    resolve(true);
+                }
                 resolve(true);
             }
             catch (e) {
@@ -53,14 +66,17 @@ class AuthorizedRest extends Rest_1.default {
     }
     ensureHeaders() {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!this._headers.hasOwnProperty('Token') || !this._headers.hasOwnProperty('Key')) {
-                try {
-                    const result = yield this.tokenManager.getAuth(JSON.stringify(this.zk.generateProof()));
-                    this.updateRestHeaders({ Token: result.data.token, Key: JSON.stringify(result.data.publicKey) });
+            if (this._headers.hasOwnProperty('Token') || this._headers.hasOwnProperty('Key')) {
+                const valid = yield this.isJWTValid();
+                if (valid === 'warn') {
+                    this.refreshJWT();
                 }
-                catch (e) {
-                    throw new Error(e.message);
+                if (!valid) {
+                    yield this.refreshJWT();
                 }
+            }
+            else {
+                yield this.refreshJWT();
             }
         });
     }
@@ -99,6 +115,51 @@ class AuthorizedRest extends Rest_1.default {
             yield this.ensureHeaders();
             return _super.del.call(this, endpoint);
         });
+    }
+    isJWTValid() {
+        return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
+            const tokenFile = `${this._authDir}/token`;
+            const rsaFile = `${this._authDir}/rsa`;
+            const token = yield fs_1.promises.readFile(tokenFile, 'utf8');
+            const rsa = yield fs_1.promises.readFile(rsaFile, 'utf8');
+            jwt.verify(token, rsa, { algorithms: ['RS256'] }, (err, decoded) => __awaiter(this, void 0, void 0, function* () {
+                if (err) {
+                    if (err.message === 'jwt expired') {
+                        console.log('Refreshing JWT...');
+                        yield this.refreshJWT();
+                        return resolve(true);
+                    }
+                    else {
+                        console.error('Unable to verify token:', err.message);
+                        return reject(err.message);
+                    }
+                }
+                else {
+                    const unixtime = Math.floor(+new Date() / 1000);
+                    if (decoded.exp - unixtime <= 300) {
+                        console.warn('JWT will expire soon, we will refresh soon.');
+                        return resolve('warn');
+                    }
+                    else {
+                        return resolve(true);
+                    }
+                }
+            }));
+        }));
+    }
+    auth(endpoint, method, params) {
+        const instance = axios_1.default.create({
+            baseURL: this._base_url,
+            timeout: 60000
+        });
+        const config = {
+            url: endpoint,
+            headers: this._headers || null,
+            method: method.toLowerCase(),
+            data: params
+        };
+        config.headers["Content-Type"] = 'application/json';
+        return instance.request(config);
     }
 }
 exports.default = AuthorizedRest;
