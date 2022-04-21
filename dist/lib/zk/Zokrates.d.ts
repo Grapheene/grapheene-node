@@ -10,13 +10,14 @@ export declare class Zokrates {
     private _storePath;
     private _rest;
     constructor(clientId: string, apiKey: string, token: string, options: any);
-    setup(): Promise<void>;
+    setup(): Promise<unknown>;
     filesExist(): Promise<boolean>;
     private getZkFiles;
     private setPaths;
     private run;
+    private spawn;
     generateProof(): Proof | boolean;
-    computeWitness(field1: string, field2: string, field3: string, field4: string): any;
+    computeWitness(field1: string, field2: string, field3: string, field4: string): Promise<unknown>;
     private stringToNumberChunks;
     private getZkFields;
 }

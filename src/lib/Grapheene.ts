@@ -1,11 +1,11 @@
 import {PrismaClient} from "@prisma/client";
-import AuthorizedRest from "./rest/AuthorizedRest";
 import {Zokrates} from "./zk/Zokrates";
 import {KMF} from "./kmf/KMF";
 import {Storage} from "./storage/Storage";
 import {DatabaseGenerator} from './DatabaseGenerator';
 import {GrapheeneOptions} from "../../index";
 import Rest from "./rest/Rest";
+import AuthorizedRest from "./rest/AuthorizedRest";
 import {constants as fsConstants, promises as fs} from 'fs';
 import path from 'path';
 import {prismaClient} from './shared/Paths'
@@ -47,15 +47,14 @@ export class Grapheene {
         this.filesDir = process.cwd() + path.sep + this._options.projectDir + path.sep + this.clientId + path.sep + 'files'
         this.prismaDir = path.dirname(__dirname).replace(/(dist.*)/, 'prisma')
 
-        /*
-        if (!this.apiKey.startsWith('SK') || !this.apiKey) {
+        if (!this.apiKey.startsWith('CK') || !this.apiKey) {
             throw new Error('Invalid APK Key')
         }
 
-        if (!this.clientId.startsWith('US') || !this.clientId) {
+        if (!this.clientId.startsWith('CL') || !this.clientId) {
             throw new Error('Invalid Client ID')
         }
-        */
+
 
         this.zkDir = this.filesDir + path.sep + 'zk';
         this.cryptoDir = this.filesDir + path.sep + 'encrypt';
@@ -104,7 +103,8 @@ export class Grapheene {
                 rest: new Rest(config.baseUrl)
             });
             await this.zk.setup();
-            this._restClient = await new AuthorizedRest(config.baseUrl, this.clientId, this.zk, this.authDir);
+            this._restClient = new AuthorizedRest(config.baseUrl, this.clientId, this.zk, this.authDir);
+            await this._restClient.init();
             await this.setupDb()
             this.setupKMS()
             this.setupStorage()

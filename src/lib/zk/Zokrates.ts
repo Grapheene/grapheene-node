@@ -7,6 +7,7 @@ import path from 'path';
 import {constants as fsConstants, promises as fs} from 'fs';
 
 const exec = require("child_process").execSync;
+const spawn = require("child_process").spawn;
 let dir = path.dirname(__dirname);
 
 
@@ -34,14 +35,32 @@ export class Zokrates {
         this._optionsPath = options.path
     }
 
-    async setup() {
-        await this.setPaths(this._optionsPath)
-        if (!await this.filesExist()) {
-            await this.getZkFiles(() => {
-                const fields = this.getZkFields();
-                this.computeWitness(fields[0], fields[1], fields[2], fields[3]);
-            })
-        }
+    setup() {
+
+        return new Promise(async (resolve, reject) => {
+            try {
+                return this.setPaths(this._optionsPath).then(async () => {
+                    if (!await this.filesExist()) {
+                        this.getZkFiles().then(async ()=>{
+                            const fields = this.getZkFields();
+                            console.log('Computing witness files.')
+                            await this.computeWitness(fields[0], fields[1], fields[2], fields[3]);
+                            console.log('Witness file computation complete.')
+                            return resolve(true)
+                        })
+
+                    } else {
+
+                        console.log('This client has already been setup.')
+                        return resolve(true)
+
+                    }
+                })
+            } catch (e) {
+                console.error('Error: \n', e)
+                return reject(e)
+            }
+        })
     }
 
     async filesExist() {
@@ -54,7 +73,7 @@ export class Zokrates {
         }
     }
 
-    private getZkFiles(callback: Function) {
+    private getZkFiles() {
         return new Promise(async (resolve, reject) => {
             console.log('Downloading Necessary Proof Files...')
             const finishedDownload = promisify(stream.finished);
@@ -115,8 +134,7 @@ export class Zokrates {
                 process.stdout.write('\n');
 
                 console.log('Download Complete.')
-                callback();
-                resolve(true)
+                return resolve(true)
             })
 
         })
@@ -152,11 +170,11 @@ export class Zokrates {
     }
 
     private run(command: string) {
-        const buff = exec(command);
+        const buff = exec(command, {timeout: 5000});
         const result = buff.toString();
         const retObj: any = {
-            error: null,
-            result: null
+            error: false,
+            result: false
         }
         if (result.match(/^error/i)) {
             retObj.error = result;
@@ -165,6 +183,41 @@ export class Zokrates {
             retObj.result = result;
             return retObj
         }
+
+    }
+
+    private spawn(command: string, args: Array<string>, options?: any) {
+        return new Promise((resolve, reject) => {
+
+            let childProcess = spawn(command, args, options);
+            let std_out = '';
+            let std_err = '';
+
+            childProcess.stdout.on('data', function (data: Buffer) {
+                std_out += data.toString();
+                console.log(data.toString());
+            });
+            childProcess.stderr.on('data', function (data: Buffer) {
+                std_err += data.toString();
+
+                console.error(data.toString());
+            });
+
+            childProcess.on('close', (code: number) => {
+                if (code === 0) {
+                    console.log(`exit_code = ${code}`);
+                    return resolve(std_out);
+                } else {
+                    console.warn(`exit_code = ${code}`);
+                    return reject(std_err);
+                }
+            });
+
+            childProcess.on('error', (error: Buffer) => {
+                std_err += error.toString();
+                console.error(error.toString());
+            });
+        });
 
     }
 
@@ -179,12 +232,16 @@ export class Zokrates {
     }
 
     computeWitness(field1: string, field2: string, field3: string, field4: string) {
-        const command = this._execPath + `compute-witness -a ${field1} ${field2} ${field3} ${field4} --input=${this._storePath}${path.sep}out --output=${this._storePath}${path.sep}witness`;
-        const computeWitness = this.run(command);
-        if (!computeWitness.error) {
-            return computeWitness.result;
-        }
-        return false;
+        return new Promise(async (resolve, reject) => {
+            try {
+                const command = this._execPath + `compute-witness`;
+                await this.spawn(command, [`-a ${field1} ${field2} ${field3} ${field4}`, `--input=${this._storePath}${path.sep}out`, `   --output=${this._storePath}${path.sep}witness`], {shell: true});
+                return resolve(true)
+            } catch (e) {
+                console.error(e)
+                reject(e)
+            }
+        })
     }
 
     private stringToNumberChunks(v: string) {
