@@ -30,6 +30,7 @@ class AuthorizedRest extends Rest {
                 const rsaFile = `${this._authDir}/rsa`
                 this._token = await fs.readFile(tokenFile, 'utf8')
                 this._rsa = await fs.readFile(rsaFile, 'utf8')
+                this.updateRestHeaders({Token: this._token, Key: JSON.stringify(this._rsa)})
                 const valid = await this.isJWTValid()
                 if (valid === 'warn' || !valid) {
                     await this.refreshJWT();
@@ -130,6 +131,7 @@ class AuthorizedRest extends Rest {
     }
 
     private auth(endpoint: string, method: string, params: any) {
+        console.log('Getting new JWT')
         const instance = axios.create({
             baseURL: this._base_url,
             timeout: 60000
