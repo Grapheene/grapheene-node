@@ -6,16 +6,17 @@ For documentation on the SDK please visie [docs.grapheene.com](https://docs.grap
 
 ## What is Grapheene?
 
-Using Grapheene and a few lines of code you can protect your application data with modern encryption, whether *in-transit* or  *at-rest* , on the server side or end-to-end between client devices.
-This can be useful to comply with user privacy laws like GDPR and CCPA or to prevent data leak in case of an attacker gaining access to your systems or backup files.
+Grapheene is an *SDK* for your application augmented with cryptographic cloud services. With Grapheene and a few lines of code, you can encrypt and decrypt any type of data – like a message or a post, an image, the content of a form field, PII or personal health information.
 
-It’s an *SDK* for your application augmented with cryptographic *cloud* services. With a few lines of code, you can encrypt and decrypt any type of data – like a message or a post, an image, the content of a form field, PII or personal health information.
+Using Grapheene’s modern encryption services you can protect your application data, whether *in-transit* or *at-rest*, on the server side or end-to-end between client devices.
 
-Using Keyring Members, you can easily manage who – or what object in your code – can access the data, easily and programmatically. This is great for code reviews where you can clearly see the entity trying to decrypt data.
+Grapheene can be used to comply with user privacy laws like GDPR and CCPA or to protect your data if an attacker gains access to your systems or backup files.
+
+Using Keyring Members, you can easily and programmatically manage who – or what object in your code – can access the encrypted data. This is great for code reviews where you can clearly see the entity trying to decrypt data.
 
 The Grapheene architecture is designed to leverage your local runtime to perform certain tasks and assist them from the cloud.
 
-The goal is to keep your data secure even if there is an unwanted leak from your systems or from the Grapheene cloud. This is the power of a well designed encryption system.
+With Grapheene you can reach the goal of data security even if there is an unwanted system or cloud leak. This is the power of a well designed encryption system.
 
 ## Getting Started
 
