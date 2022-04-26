@@ -1,6 +1,6 @@
 {
   "name": "@grapheene/grapheene",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "description": "A Grapheene SDK for NodeJS",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
