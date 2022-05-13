@@ -1,5 +1,5 @@
 import path from 'path';
-import {constants as fsConstants, promises as fs} from 'fs';
+import {constants as fsConstants, promises as fs, existsSync} from 'fs';
 import {execSync as exec, spawnSync as spawn} from "child_process";
 import {prismaClient, prismaExec, prismaStorage} from './shared/Paths'
 
@@ -11,16 +11,14 @@ export const DatabaseGenerator = async (options: any) => {
             const prismaSchema = path.join(prismaStorage, 'schema.prisma');
 
             // Only remove the prisma schema if it exists
-            try {
+            if (options.resetDb) {
+                console.log('Reseting DB\n')
                 await fs.access(prismaSchema, fsConstants.F_OK);
                 await fs.unlink(prismaSchema)
-            } catch (e) {
-                // do nothing
             }
-
-            process.stdout.write('\rSetting up the database...');
             try {
-                if (options.dbProvider === 'sqlite') {
+                if (options.dbProvider === 'sqlite' && (!existsSync(path.join(options.dir, 'grapheene.db')) || !existsSync(path.join(prismaClient, 'schema.prisma')))) {
+                    process.stdout.write('\rSetting up the database...\n');
                     const dbPath = path.join(options.dir, 'grapheene.db');
                     const sqlitePrisma = `${prefix}
   url      = "file:${dbPath}"
@@ -29,37 +27,41 @@ ${postfix}`
                     await fs.writeFile(path.join(prismaStorage, 'schema.prisma'), sqlitePrisma);
                     await run(`${prismaExec} generate --schema "${prismaSchema}"`);
                     await run(`${prismaExec} migrate deploy --schema "${prismaSchema}"`);
-                } else if (dbUri.match(/^mongodb/)) {
-                    await fs.copyFile(path.join(prismaStorage, 'schemas', 'mongo.prisma'), prismaSchema);
-                    await run(`${prismaExec} generate --schema "${prismaSchema}"`);
+                    process.stdout.write('done!\n');
+                }
+                if (dbUri) {
+                    if (dbUri.match(/^mongodb/)) {
+                        process.stdout.write('\rSetting up the database...\n');
+                        await fs.copyFile(path.join(prismaStorage, 'schemas', 'mongo.prisma'), prismaSchema);
+                        await run(`${prismaExec} generate --schema "${prismaSchema}"`);
+                        process.stdout.write('done!\n');
 
-                } else if (dbUri.match(/^post/)) {
-                    await fs.copyFile(path.join(prismaStorage, 'schemas', 'postgres.prisma'), prismaSchema);
-                    await run(`${prismaExec} generate --schema "${prismaSchema}"`);
+                    } else if (dbUri.match(/^post/)) {
+                        process.stdout.write('\rSetting up the database...\n')
+                        await fs.copyFile(path.join(prismaStorage, 'schemas', 'postgres.prisma'), prismaSchema);
+                        await run(`${prismaExec} generate --schema "${prismaSchema}"`);
 
-                    try {
-                        await fs.access(path.join(prismaStorage, 'migrations'), fsConstants.F_OK);
-                    } catch (e) {
-                        // Migrations don't exist, run them
-                        if (options.db.migrate) {
-                            await run(`${prismaExec} migrate deploy --schema "${prismaSchema}"`);
+                        try {
+                            await fs.access(path.join(prismaStorage, 'migrations'), fsConstants.F_OK);
+                        } catch (e) {
+                            // Migrations don't exist, run them
+                            if (options.db.migrate) {
+                                await run(`${prismaExec} migrate deploy --schema "${prismaSchema}"`);
+                            }
                         }
+                        process.stdout.write('done!\n');
                     }
                 }
 
                 let dbReady = false;
                 while (!dbReady) {
-                    try {
-                        await fs.access(path.join(prismaClient, 'schema.prisma'))
-                        dbReady = true;
-                    } catch (e) {
-                        // do nothing
-                    }
+                    await fs.access(path.join(prismaClient, 'schema.prisma'))
+                    dbReady = true;
                 }
 
                 // NOTE: this require has to be here to prevent using the cached unusable Prisma client
                 const {PrismaClient} = require('@prisma/client');
-                process.stdout.write('done!\n');
+
                 return new PrismaClient();
             } catch
                 (e) {

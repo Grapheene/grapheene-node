@@ -1,7 +1,7 @@
 import Rest from "./Rest";
 import {Zokrates} from "../zk/Zokrates";
 import {AuthHeaders} from "../../../index";
-import {promises as fs} from "fs";
+import * as fs from "fs";
 import axios from "axios";
 
 const jwt = require('jsonwebtoken')
@@ -26,17 +26,23 @@ class AuthorizedRest extends Rest {
     init() {
         return new Promise(async (resolve, reject) => {
             try {
-                const tokenFile = `${this._authDir}/token`
-                const rsaFile = `${this._authDir}/rsa`
-                this._token = await fs.readFile(tokenFile, 'utf8')
-                this._rsa = await fs.readFile(rsaFile, 'utf8')
-                this.updateRestHeaders({Token: this._token, Key: JSON.stringify(this._rsa)})
-                const valid = await this.isJWTValid()
-                if (valid === 'warn' || !valid) {
+                if (fs.existsSync(`${this._authDir}/token`) && fs.existsSync(`${this._authDir}/rsa`)) {
+
+                    const tokenFile = `${this._authDir}/token`
+                    const rsaFile = `${this._authDir}/rsa`
+                    this._token = fs.readFileSync(tokenFile, {encoding: 'utf8'})
+                    this._rsa = fs.readFileSync(rsaFile, {encoding: 'utf8'})
+                    this.updateRestHeaders({Token: this._token, Key: JSON.stringify(this._rsa)})
+                    const valid = await this.isJWTValid()
+                    if (valid === 'warn' || !valid) {
+                        await this.refreshJWT();
+                        resolve(true)
+                    }
+                    resolve(true)
+                } else {
                     await this.refreshJWT();
                     resolve(true)
                 }
-                resolve(true)
             } catch (e) {
                 console.log(e)
                 reject(e)
@@ -88,8 +94,8 @@ class AuthorizedRest extends Rest {
         return new Promise(async (resolve, reject) => {
             const tokenFile = `${this._authDir}/token`
             const rsaFile = `${this._authDir}/rsa`
-            const token = await fs.readFile(tokenFile, 'utf8')
-            const rsa = await fs.readFile(rsaFile, 'utf8')
+            const token = fs.readFileSync(tokenFile, {encoding: 'utf8'})
+            const rsa = fs.readFileSync(rsaFile, {encoding: 'utf8'})
             jwt.verify(token, rsa, {algorithms: ['RS256']}, async (err: Error, decoded: any) => {
                 if (err) {
                     if (err.message === 'jwt expired') {
@@ -119,8 +125,8 @@ class AuthorizedRest extends Rest {
                 const result = await this.auth('/auth', 'POST', {uuid: this._clientId, proof: JSON.stringify(this.zk.generateProof())});
                 this._token = result.data.token;
                 this._rsa = result.data.publicKey;
-                await fs.writeFile(`${this._authDir}/token`, this._token)
-                await fs.writeFile(`${this._authDir}/rsa`, this._rsa)
+                fs.writeFileSync(`${this._authDir}/token`, this._token, {encoding: 'utf8'})
+                fs.writeFileSync(`${this._authDir}/rsa`, this._rsa, {encoding: 'utf8'})
                 this.updateRestHeaders({Token: this._token, Key: JSON.stringify(this._rsa)})
                 return resolve({Token: this._token, Key: this._rsa});
             } catch (err) {

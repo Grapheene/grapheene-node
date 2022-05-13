@@ -21,7 +21,6 @@ const Rest_1 = __importDefault(require("./rest/Rest"));
 const AuthorizedRest_1 = __importDefault(require("./rest/AuthorizedRest"));
 const fs_1 = require("fs");
 const path_1 = __importDefault(require("path"));
-const Paths_1 = require("./shared/Paths");
 const config = require('../../config.json');
 const defaults = {
     medium: 'local',
@@ -71,22 +70,6 @@ class Grapheene {
         return __awaiter(this, void 0, void 0, function* () {
             try {
                 yield this.ensureDirExist();
-                try {
-                    const pkgJson = path_1.default.join(Paths_1.prismaClient, 'package.json');
-                    yield fs_1.promises.access(pkgJson, fs_1.constants.F_OK);
-                    yield fs_1.promises.unlink(pkgJson);
-                }
-                catch (e) {
-                    // do nothing
-                }
-                try {
-                    const schemaFile = path_1.default.join(Paths_1.prismaClient, 'schema.prisma');
-                    yield fs_1.promises.access(schemaFile, fs_1.constants.F_OK);
-                    yield fs_1.promises.unlink(schemaFile);
-                }
-                catch (e) {
-                    // do nothing
-                }
                 this.zk = new Zokrates_1.Zokrates(this.clientId, this.apiKey, this.token, {
                     path: this.zkDir,
                     rest: new Rest_1.default(config.baseUrl)
