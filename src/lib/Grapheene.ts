@@ -82,22 +82,6 @@ export class Grapheene {
         try {
             await this.ensureDirExist()
 
-            try {
-                const pkgJson = path.join(prismaClient, 'package.json');
-                await fs.access(pkgJson, fsConstants.F_OK);
-                await fs.unlink(pkgJson);
-            } catch (e) {
-                // do nothing
-            }
-
-            try {
-                const schemaFile = path.join(prismaClient, 'schema.prisma');
-                await fs.access(schemaFile, fsConstants.F_OK);
-                await fs.unlink(schemaFile);
-            } catch (e) {
-                // do nothing
-            }
-
             this.zk = new Zokrates(this.clientId, this.apiKey, this.token, {
                 path: this.zkDir,
                 rest: new Rest(config.baseUrl)

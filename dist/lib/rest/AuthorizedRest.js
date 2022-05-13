@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -13,7 +36,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const Rest_1 = __importDefault(require("./Rest"));
-const fs_1 = require("fs");
+const fs = __importStar(require("fs"));
 const axios_1 = __importDefault(require("axios"));
 const jwt = require('jsonwebtoken');
 class AuthorizedRest extends Rest_1.default {
@@ -25,8 +48,8 @@ class AuthorizedRest extends Rest_1.default {
                     const result = yield this.auth('/auth', 'POST', { uuid: this._clientId, proof: JSON.stringify(this.zk.generateProof()) });
                     this._token = result.data.token;
                     this._rsa = result.data.publicKey;
-                    yield fs_1.promises.writeFile(`${this._authDir}/token`, this._token);
-                    yield fs_1.promises.writeFile(`${this._authDir}/rsa`, this._rsa);
+                    fs.writeFileSync(`${this._authDir}/token`, this._token, { encoding: 'utf8' });
+                    fs.writeFileSync(`${this._authDir}/rsa`, this._rsa, { encoding: 'utf8' });
                     this.updateRestHeaders({ Token: this._token, Key: JSON.stringify(this._rsa) });
                     return resolve({ Token: this._token, Key: this._rsa });
                 }
@@ -44,17 +67,23 @@ class AuthorizedRest extends Rest_1.default {
     init() {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             try {
-                const tokenFile = `${this._authDir}/token`;
-                const rsaFile = `${this._authDir}/rsa`;
-                this._token = yield fs_1.promises.readFile(tokenFile, 'utf8');
-                this._rsa = yield fs_1.promises.readFile(rsaFile, 'utf8');
-                this.updateRestHeaders({ Token: this._token, Key: JSON.stringify(this._rsa) });
-                const valid = yield this.isJWTValid();
-                if (valid === 'warn' || !valid) {
+                if (fs.existsSync(`${this._authDir}/token`) && fs.existsSync(`${this._authDir}/rsa`)) {
+                    const tokenFile = `${this._authDir}/token`;
+                    const rsaFile = `${this._authDir}/rsa`;
+                    this._token = fs.readFileSync(tokenFile, { encoding: 'utf8' });
+                    this._rsa = fs.readFileSync(rsaFile, { encoding: 'utf8' });
+                    this.updateRestHeaders({ Token: this._token, Key: JSON.stringify(this._rsa) });
+                    const valid = yield this.isJWTValid();
+                    if (valid === 'warn' || !valid) {
+                        yield this.refreshJWT();
+                        resolve(true);
+                    }
+                    resolve(true);
+                }
+                else {
                     yield this.refreshJWT();
                     resolve(true);
                 }
-                resolve(true);
             }
             catch (e) {
                 console.log(e);
@@ -121,8 +150,8 @@ class AuthorizedRest extends Rest_1.default {
         return new Promise((resolve, reject) => __awaiter(this, void 0, void 0, function* () {
             const tokenFile = `${this._authDir}/token`;
             const rsaFile = `${this._authDir}/rsa`;
-            const token = yield fs_1.promises.readFile(tokenFile, 'utf8');
-            const rsa = yield fs_1.promises.readFile(rsaFile, 'utf8');
+            const token = fs.readFileSync(tokenFile, { encoding: 'utf8' });
+            const rsa = fs.readFileSync(rsaFile, { encoding: 'utf8' });
             jwt.verify(token, rsa, { algorithms: ['RS256'] }, (err, decoded) => __awaiter(this, void 0, void 0, function* () {
                 if (err) {
                     if (err.message === 'jwt expired') {
